@@ -18,8 +18,8 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 
-# scope session means that the fixture is created once per test session
-# It yields a session to be used in tests and cleans up after all tests are done
+# scope "function" means that the fixture is created once per test function
+# It yields a session to be used in tests and cleans up after each test function is done
 @pytest.fixture(scope="function", autouse=True)
 def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
