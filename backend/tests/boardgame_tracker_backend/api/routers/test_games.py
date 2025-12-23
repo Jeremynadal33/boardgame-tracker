@@ -20,7 +20,6 @@ def test_create_game_success(client: TestClient) -> None:
     assert data["max_players"] == 4
     assert data["description"] == "A popular board game"
 
-
 def test_create_game_already_exists(client: TestClient) -> None:
     game_data = {
         "name": "Catan",
@@ -29,6 +28,8 @@ def test_create_game_already_exists(client: TestClient) -> None:
         "description": "A popular board game"
     }
     response = client.post(games_endpoint, json=game_data)
+    assert response.status_code == 200
+
     response = client.post(games_endpoint, json=game_data)
 
     data = response.json()

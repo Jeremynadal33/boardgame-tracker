@@ -25,11 +25,12 @@ def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
         # init_db(session) # Should we use the same int_db as production ?
 
+        SQLModel.metadata.drop_all(engine) # Surely not needed with in-memory DB but just in case
         SQLModel.metadata.create_all(engine)
         yield session
-        statement = delete(Game)
-        session.exec(statement)
-        session.commit()
+        # Cleanup after test
+        SQLModel.metadata.drop_all(engine)
+
 
 def get_test_db() -> Generator[Session, None, None]:
     with Session(engine) as session:
