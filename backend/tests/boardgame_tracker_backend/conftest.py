@@ -23,7 +23,7 @@ engine = create_engine(
 @pytest.fixture(scope="function", autouse=True)
 def db() -> Generator[Session, None, None]:
     with Session(engine) as session:
-        # init_db(session) # Should we use the same int_db as production ?
+        # init_db(session) # Should we use the same init_db as production ?
 
         SQLModel.metadata.drop_all(engine) # Surely not needed with in-memory DB but just in case
         SQLModel.metadata.create_all(engine)
