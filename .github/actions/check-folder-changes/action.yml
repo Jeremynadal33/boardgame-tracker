@@ -1,0 +1,23 @@
+name: 'Check Folder Changes'
+description: 'Check if any files in the specified folder have changed compared to master branch'
+inputs:
+  folder:
+    description: 'The folder path to check for changes'
+    required: true
+outputs:
+  changed:
+    description: 'true if files in the folder have changed, false otherwise'
+    value: ${{ steps.check_changes.outputs.changed }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Check for changes in folder
+      id: check_changes
+      shell: bash
+      run: |
+        git fetch origin master
+        if git diff --name-only origin/master...HEAD | grep -E "^${{ inputs.folder }}/"; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
