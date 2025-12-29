@@ -1,12 +1,13 @@
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field, Column, TIMESTAMP, text
+from sqlmodel import SQLModel, Field
 from pydantic import EmailStr
+from typing import Sequence
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 class PlayerBase(SQLModel):
-    pseudo: str = Field(index=True, unique=True)
-    email: EmailStr = Field(unique=True)
+    pseudo: str = Field(index=True, unique=True, max_length=30)
+    email: EmailStr = Field(unique=True, max_length=100)
     is_superuser: bool = False
     # Optional for stats & maybe later teammate findings
     city: str | None = None
@@ -19,19 +20,35 @@ class Player(PlayerBase, table=True):
     __table_name__ = "player"
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str
-    created_datetime: datetime | None = Field(sa_column=Column(
-        TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
-    ))
-    updated_datetime: datetime | None = Field(sa_column=Column(
-        TIMESTAMP(timezone=True),
-        nullable=False,
-        server_default=text("CURRENT_TIMESTAMP"),
-        server_onupdate=text("CURRENT_TIMESTAMP"),
-    ))
+    created_at: datetime | None = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: datetime | None = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)}
+    )
     # TODO: add FKs once relationships are defined
 
 ### Represents data needed to create a new player
 class PlayerCreate(PlayerBase):
-    password: str
+    password: str = Field(min_length=8, max_length=72)
+
+### Represents a player that can be publicly shared
+class PlayerPublic(PlayerBase):
+    id: UUID
+
+
+### Represents a list of players that can be publicly shared
+class PlayersPublic(SQLModel):
+    players: Sequence[PlayerPublic]
+    count: int
+
+
+# Contents of JWT token
+class TokenPayload(SQLModel):
+    sub: str | None = None
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str = "bearer"
+

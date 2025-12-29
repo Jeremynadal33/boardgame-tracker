@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     # Generate a random secret key if not provided, for development purposes
     SECRET_KEY: str = secrets.token_urlsafe(32) 
 
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+
 
     # print("Loading settings from .env file")
     # print(f"model_config: {model_config}")

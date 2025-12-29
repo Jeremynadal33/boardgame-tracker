@@ -45,8 +45,34 @@ def test_create_game_missing_name(client: TestClient) -> None:
     response = client.post(games_endpoint, json=game_data)
     assert response.status_code == 422  # Unprocessable Entity returned by FastAPI for validation errors
 
-def test_list_games(client: TestClient) -> None:
+def test_list_games_no_games(client: TestClient) -> None:
     response = client.get(games_endpoint)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
+    assert len(data) == 0
+
+def test_list_games_with_games(client: TestClient) -> None:
+    game_data_1 = {
+        "name": "Catan",
+        "min_players": 3,
+        "max_players": 4,
+        "description": "A popular board game"
+    }
+    game_data_2 = {
+        "name": "Pandemic",
+        "min_players": 2,
+        "max_players": 4,
+        "description": "A cooperative board game"
+    }
+    client.post(games_endpoint, json=game_data_1)
+    client.post(games_endpoint, json=game_data_2)
+
+    response = client.get(games_endpoint)
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+    game_names = {game["name"] for game in data}
+    assert "Catan" in game_names
+    assert "Pandemic" in game_names

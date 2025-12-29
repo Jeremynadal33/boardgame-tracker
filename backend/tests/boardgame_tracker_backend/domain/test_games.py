@@ -1,4 +1,4 @@
-from boardgame_tracker_backend.domain.games import create_game, list_games, GameAlreadyExistsError, GameCreationError
+from boardgame_tracker_backend.domain.games import create_game, list_games, GameAlreadyExistsError
 from boardgame_tracker_backend.models.game import Game, GameCreate
 
 from sqlmodel import Session

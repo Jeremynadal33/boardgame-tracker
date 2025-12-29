@@ -4,7 +4,8 @@ from sqlmodel import Session
 
 from boardgame_tracker_backend.core.database import engine, init_db
 
-from boardgame_tracker_backend.models.game import Game 
+# Import all models to ensure they are registered with SQLModel
+from boardgame_tracker_backend.models import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -88,3 +88,18 @@ erDiagram
     PLAYER ||--o{ GAME_RESULT : "participates"
     PLAYER ||--o{ GAME_SESSION : "creates"
 ```
+
+<details> <summary>Dumb questions </summary>
+<li> Bonnes pratiques pour tester une api ? 
+    <ul>
+        <li>Genre tester la fonction elle même
+        <li>Puis tester d'appeler l'api en mockant la sortie de la fonction ?
+    </ul>
+<li> Bonnes pratiques archi hexa (pas que) dans le cadre d'une API
+    <ul>
+        <li>Comment remonter les erreurs ? Genre si domain raise, API doit exept + raise la même ?
+        <li>Comment faire pour implem la couche db aie aie aie api call func dans domain qui call func dans infrastructure ? 
+    </ul>
+<li>
+
+</details>
