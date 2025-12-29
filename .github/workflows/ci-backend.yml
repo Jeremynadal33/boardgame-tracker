@@ -16,6 +16,12 @@ jobs:
     outputs:
       run_tests: ${{ steps.set_run_tests.outputs.run_tests }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: 'false'
+
       - name: Set run tests output
         id: set_run_tests
         run: |
@@ -28,7 +34,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    if: jobs.should_run_tests.outputs.run_tests == 'true'
+    needs: should_run_tests
+    if: needs.should_run_tests.outputs.run_tests == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -61,7 +68,8 @@ jobs:
     
   test:
     runs-on: ubuntu-latest
-    if: jobs.should_run_tests.outputs.run_tests == 'true'
+    needs: should_run_tests
+    if: needs.should_run_tests.outputs.run_tests == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
