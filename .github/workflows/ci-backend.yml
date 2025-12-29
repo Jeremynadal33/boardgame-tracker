@@ -1,0 +1,87 @@
+name: CI backend
+
+on:
+  pull_request:
+    branches: [master]
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_INDEX_MIRAKL_USERNAME : ${{ secrets.ARTIFACTORY_CLOUD_PYTHON_USERNAME }}
+  UV_INDEX_MIRAKL_PASSWORD : ${{ secrets.ARTIFACTORY_CLOUD_PYTHON_TOKEN }}
+
+jobs:
+  should_run_tests:
+    runs-on: ubuntu-latest
+    outputs:
+      run_tests: ${{ steps.set_run_tests.outputs.run_tests }}
+    steps:
+      - name: Set run tests output
+        id: set_run_tests
+        run: |
+          git fetch origin master
+          if git diff --name-only origin/master...HEAD | grep -E '^backend/'; then
+            echo "run_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    if: jobs.should_run_tests.outputs.run_tests == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: 'false'
+
+      - name: Install uv
+        uses: ./.github/actions/install_uv.yml
+    
+      - name: Run ruff linting
+        run: |
+          echo "## 🔍 Ruff Linting Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if uv ruff check --diff --output-format=github; then
+            echo "✅ **Linting**: No issues found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Linting**: Issues found (see annotations above)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if uv ruff format --check --diff; then
+            echo "✅ **Formatting**: Code is properly formatted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Formatting**: Code formatting issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+        working-directory: backend
+    
+  test:
+    runs-on: ubuntu-latest
+    if: jobs.should_run_tests.outputs.run_tests == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: 'false'
+
+      - name: Install uv
+        uses: ./.github/actions/install_uv.yml
+      
+      - name: Run backend tests
+        run: |
+          echo "## 🧪 Backend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if uv pytest --junitxml=backend/test-results.xml; then
+            echo "✅ **Tests**: All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tests**: Some tests failed (see details above)" >> $GITHUB_STEP_SUMMARY
+          fi
+        working-directory: backend
