@@ -2,26 +2,26 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 
-from datetime import timedelta
 from typing import Any
 
 from boardgame_tracker_backend.api.dependencies import SessionDep
 
-from boardgame_tracker_backend.models.player import PlayerCreate, PlayerPublic, PlayersPublic, Token
+from boardgame_tracker_backend.models.player import (
+    PlayerCreate,
+    PlayerPublic,
+    PlayersPublic,
+    Token,
+)
 from boardgame_tracker_backend.domain import players
 
-from boardgame_tracker_backend.core.config import settings
-from boardgame_tracker_backend.core import security
 
 router = APIRouter(
     prefix="/players",
     tags=["players"],
 )
 
-@router.post(
-    "/signup"
-    , response_model=PlayerPublic
-)
+
+@router.post("/signup", response_model=PlayerPublic)
 def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     """
     Create new player.
@@ -32,25 +32,20 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     except players.PlayerAlreadyExistsError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A player with the {e.type} '{e.input}' already exists"
+            detail=f"A player with the {e.type} '{e.input}' already exists",
         )
     except players.PlayerCreationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred"
+            detail="An unexpected error occurred",
         )
 
     return db_player
 
-@router.get(
-    ""
-    , response_model=PlayersPublic
-)
+
+@router.get("", response_model=PlayersPublic)
 def list_players(*, session: SessionDep) -> Any:
     """
     List all players.
@@ -59,10 +54,7 @@ def list_players(*, session: SessionDep) -> Any:
     return players.list_players(session=session)
 
 
-@router.post(
-    "/login/access-token"
-    , response_model=Token
-)
+@router.post("/login/access-token", response_model=Token)
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -75,10 +67,21 @@ def login_access_token(
         )
         return token
     except players.PlayerNotFoundError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Player with email {form_data.username} not found")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Player with email {form_data.username} not found",
+        )
     except players.InvalidCredentialsError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect email or password")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect email or password",
+        )
     except players.TokenCreationError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred",
+        )

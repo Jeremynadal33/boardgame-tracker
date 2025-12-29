@@ -1,4 +1,10 @@
-from boardgame_tracker_backend.models.player import Player, PlayerCreate, PlayerPublic, PlayersPublic, Token
+from boardgame_tracker_backend.models.player import (
+    Player,
+    PlayerCreate,
+    PlayerPublic,
+    PlayersPublic,
+    Token,
+)
 from boardgame_tracker_backend.core.security import get_password_hash, verify_password
 
 from sqlmodel import Session, select, func
@@ -16,35 +22,41 @@ class PlayerAlreadyExistsError(Exception):
         self.input = input
         super().__init__(f"Player with {type} '{input}' already exists")
 
+
 class PlayerNotFoundError(Exception):
     pass
+
 
 class PlayerCreationError(Exception):
     pass
 
+
 class PlayerValidationError(Exception):
     pass
+
 
 class InvalidAccessTokenError(Exception):
     pass
 
+
 class InactivePlayerError(Exception):
     pass
+
 
 class InvalidCredentialsError(Exception):
     pass
 
+
 class TokenCreationError(Exception):
     pass
 
-def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
 
+def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
     try:
         hashed_password = get_password_hash(player_in.password)
 
         db_player = Player.model_validate(
-            player_in,
-            update={"hashed_password": hashed_password}
+            player_in, update={"hashed_password": hashed_password}
         )
         session.add(db_player)
         session.commit()
@@ -53,8 +65,8 @@ def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
 
     except IntegrityError as e:
         session.rollback()
-        error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-        
+        error_msg = str(e.orig) if hasattr(e, "orig") else str(e)
+
         if "UNIQUE constraint failed: player.email" in error_msg:
             raise PlayerAlreadyExistsError("email", player_in.email)
         elif "UNIQUE constraint failed: player.pseudo" in error_msg:
@@ -68,23 +80,24 @@ def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
         session.rollback()
         raise PlayerCreationError(f"Failed to create player: {str(e)}")
 
-def list_players(*, session: Session) -> PlayersPublic:
 
+def list_players(*, session: Session) -> PlayersPublic:
     count_statement = select(func.count()).select_from(Player)
     count = session.exec(count_statement).one()
 
-    statement = select(Player)#.offset(skip).limit(limit)
+    statement = select(Player)  # .offset(skip).limit(limit)
     players = session.exec(statement).all()
 
     return PlayersPublic(
-        players=[PlayerPublic.model_validate(player) for player in players], 
-        count=count
+        players=[PlayerPublic.model_validate(player) for player in players], count=count
     )
+
 
 def get_user_by_email(*, session: Session, email: str) -> Player | None:
     statement = select(Player).where(Player.email == email)
     session_user = session.exec(statement).first()
     return session_user
+
 
 # Should we raise specific errors here?
 def authenticate(*, session: Session, email: str, password: str) -> Player:
@@ -95,6 +108,7 @@ def authenticate(*, session: Session, email: str, password: str) -> Player:
         raise InvalidCredentialsError()
     return db_user
 
+
 def create_access_token(*, session: Session, email: str, password: str) -> Token:
     try:
         user = authenticate(session=session, email=email, password=password)
@@ -102,10 +116,9 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
         if not user.is_active:
             raise PlayerCreationError("Inactive player")
 
-        access_token_expires = timedelta(minutes= settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = security.create_access_token(
-            subject=user.id,
-            expires_delta=access_token_expires
+            subject=user.id, expires_delta=access_token_expires
         )
         return Token(access_token=access_token)
     except PlayerNotFoundError:
@@ -114,5 +127,3 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
         raise InvalidCredentialsError("Incorrect email or password")
     except Exception as e:
         raise TokenCreationError(f"Failed to create access token: {str(e)}")
-
-
