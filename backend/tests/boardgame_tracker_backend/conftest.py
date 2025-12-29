@@ -6,7 +6,7 @@ from sqlmodel import Session, delete, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
 
 from boardgame_tracker_backend.main import app
-from boardgame_tracker_backend.models.game import Game
+from boardgame_tracker_backend.models import *
 from boardgame_tracker_backend.api.dependencies import get_db
 
 IN_MEMORY_TESTING_DATABASE_URL = "sqlite:///:memory:"

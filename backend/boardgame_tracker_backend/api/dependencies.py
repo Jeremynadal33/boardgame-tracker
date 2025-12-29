@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from uuid import UUID
 
 from collections.abc import Generator
 
@@ -23,6 +24,8 @@ def get_db() -> Generator[Session, None, None]:
 SessionDep = Annotated[Session, Depends(get_db)]
 
 # Not entirely sure about why TokenDep is needed but it looks like best practice
+# The tokenUrl is the endpoint where clients can get the token
+# Must match the actual login endpoint in boardgame_tracker_backend/api/routers/players.py
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/players/login/access-token"
 )
@@ -46,7 +49,22 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
             detail="Could not validate credentials",
         )
     
-    player = session.get(Player, token_data.sub)
+    # Convert string UUID back to UUID object for database query
+    try:
+        player_id = UUID(token_data.sub) if token_data.sub else None
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    
+    if not player_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
+    
+    player = session.get(Player, player_id)
     if not player:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found")
     if not player.is_active:

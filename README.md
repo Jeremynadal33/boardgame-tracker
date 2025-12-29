@@ -4,4 +4,4 @@ A board game tracking application that allows you to record game scores, edit pa
 
 ## To check later for production level application
 * [Better security handeling of tokens](https://github.com/fastapi/full-stack-fastapi-template/issues/189)
- 
+* Request rate limit
