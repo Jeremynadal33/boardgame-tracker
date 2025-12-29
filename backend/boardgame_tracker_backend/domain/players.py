@@ -78,7 +78,7 @@ def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
         raise PlayerValidationError(f"Player validation error: {str(e)}")
     except Exception as e:
         session.rollback()
-        raise PlayerCreationError(f"Failed to create player: {str(e)}")
+        raise PlayerCreationError(f"Unknown error while creating player: {str(e)}")
 
 
 def list_players(*, session: Session) -> PlayersPublic:
@@ -93,32 +93,32 @@ def list_players(*, session: Session) -> PlayersPublic:
     )
 
 
-def get_user_by_email(*, session: Session, email: str) -> Player | None:
+def get_player_by_email(*, session: Session, email: str) -> Player | None:
     statement = select(Player).where(Player.email == email)
-    session_user = session.exec(statement).first()
-    return session_user
+    session_player = session.exec(statement).first()
+    return session_player
 
 
 # Should we raise specific errors here?
 def authenticate(*, session: Session, email: str, password: str) -> Player:
-    db_user = get_user_by_email(session=session, email=email)
-    if not db_user:
+    db_player = get_player_by_email(session=session, email=email)
+    if not db_player:
         raise PlayerNotFoundError()
-    if not verify_password(password, db_user.hashed_password):
+    if not verify_password(password, db_player.hashed_password):
         raise InvalidCredentialsError()
-    return db_user
+    return db_player
 
 
 def create_access_token(*, session: Session, email: str, password: str) -> Token:
     try:
-        user = authenticate(session=session, email=email, password=password)
+        player = authenticate(session=session, email=email, password=password)
 
-        if not user.is_active:
-            raise PlayerCreationError("Inactive player")
+        if not player.is_active:
+            raise InactivePlayerError("Inactive player")
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = security.create_access_token(
-            subject=user.id, expires_delta=access_token_expires
+            subject=player.id, expires_delta=access_token_expires
         )
         return Token(access_token=access_token)
     except PlayerNotFoundError:

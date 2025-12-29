@@ -15,7 +15,7 @@ from boardgame_tracker_backend.core.config import settings
 class TestCreateAccessToken:
     def test_create_access_token_success(self):
         """Test that create_access_token returns a string."""
-        subject = "test_user"
+        subject = "test_player"
         expires_delta = timedelta(minutes=30)
 
         token = create_access_token(subject, expires_delta)
@@ -25,7 +25,7 @@ class TestCreateAccessToken:
 
     def test_create_access_token_valid_jwt(self):
         """Test that the created token is a valid JWT."""
-        subject = "test_user"
+        subject = "test_player"
         expires_delta = timedelta(minutes=30)
         expected_exp = datetime.now(timezone.utc) + expires_delta
 
@@ -45,22 +45,22 @@ class TestCreateAccessToken:
         """Test that different subjects create different tokens."""
         expires_delta = timedelta(minutes=30)
 
-        token1 = create_access_token("user1", expires_delta)
-        token2 = create_access_token("user2", expires_delta)
+        token1 = create_access_token("player1", expires_delta)
+        token2 = create_access_token("player2", expires_delta)
 
         assert token1 != token2
 
         decoded1 = jwt.decode(token1, settings.SECRET_KEY, algorithms=[ALGORITHM])
         decoded2 = jwt.decode(token2, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
-        assert decoded1["sub"] == "user1"
-        assert decoded2["sub"] == "user2"
+        assert decoded1["sub"] == "player1"
+        assert decoded2["sub"] == "player2"
 
 
 class TestDecodeAccessToken:
     def test_decode_access_token_valid_token(self):
         """Test decoding a valid token."""
-        subject = "test_user"
+        subject = "test_player"
         expires_delta = timedelta(minutes=30)
 
         token = create_access_token(subject, expires_delta)
@@ -76,7 +76,7 @@ class TestDecodeAccessToken:
 
     def test_decode_access_token_expired_token(self):
         """Test that decoding an expired token raises an exception."""
-        subject = "test_user"
+        subject = "test_player"
         expires_delta = timedelta(seconds=-1)  # Already expired
 
         token = create_access_token(subject, expires_delta)

@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///boardgame_tracker.db"
     DATABASE_TYPE: str = "sqlite"  # Default to sqlite if not specified
-    PROJECT_NAME: str
+    PROJECT_NAME: str = "Boardgame Tracker"
 
     model_config = SettingsConfigDict(env_file=".env")
 

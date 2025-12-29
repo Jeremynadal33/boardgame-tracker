@@ -44,21 +44,33 @@ jobs:
     
       - name: Run ruff linting
         run: |
+          uv --version
           echo "## 🔍 Ruff Linting Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if uv ruff check --diff --output-format=github; then
+          # Check linting and capture exit code
+          if uvx ruff check --diff --output-format=github; then
             echo "✅ **Linting**: No issues found" >> $GITHUB_STEP_SUMMARY
+            LINT_EXIT=0
           else
             echo "❌ **Linting**: Issues found (see annotations above)" >> $GITHUB_STEP_SUMMARY
+            LINT_EXIT=1
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if uv ruff format --check --diff; then
+          # Check formatting and capture exit code
+          if uvx ruff format --check --diff; then
             echo "✅ **Formatting**: Code is properly formatted" >> $GITHUB_STEP_SUMMARY
+            FORMAT_EXIT=0
           else
             echo "❌ **Formatting**: Code formatting issues found" >> $GITHUB_STEP_SUMMARY
+            FORMAT_EXIT=1
+          fi
+          
+          # Exit with failure if either check failed
+          if [ $LINT_EXIT -ne 0 ] || [ $FORMAT_EXIT -ne 0 ]; then
+            exit 1
           fi
         working-directory: backend
     
@@ -74,15 +86,18 @@ jobs:
           clean: 'false'
 
       - name: Install uv
-        uses: ./.github/actions/install_uv.yml
+        uses: ./.github/actions/install_uv
       
       - name: Run backend tests
         run: |
           echo "## 🧪 Backend Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if uv pytest --junitxml=backend/test-results.xml; then
+          
+          # Run tests with proper uv environment and capture result
+          if uv run pytest --junitxml=backend/test-results.xml; then
             echo "✅ **Tests**: All tests passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ **Tests**: Some tests failed (see details above)" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
         working-directory: backend

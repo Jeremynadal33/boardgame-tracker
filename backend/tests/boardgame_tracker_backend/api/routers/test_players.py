@@ -59,7 +59,7 @@ class TestLoginAccessToken:
     def test_login_access_token_player_not_found(
         self, mock_create_token, client: TestClient
     ) -> None:
-        """Test login with non-existent user returns 400 error"""
+        """Test login with non-existent player returns 400 error"""
         login_data = self.login_data.copy()
         login_data["username"] = "nonexistent@example.com"
 

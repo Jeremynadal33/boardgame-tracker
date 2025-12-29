@@ -77,4 +77,4 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
     return player
 
 
-CurrentUser = Annotated[Player, Depends(get_current_player)]
+CurrentPlayer = Annotated[Player, Depends(get_current_player)]

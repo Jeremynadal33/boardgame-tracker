@@ -19,7 +19,7 @@ def create_game(*, session: SessionDep, game_in: GameCreate) -> Any:
     """
 
     # TODO : add created_by metadata in the Game model
-    # TODO : get current user to add it to the metadata
+    # TODO : get current player to add it to the metadata
 
     try:
         db_game = games.create_game(session=session, game_in=game_in)

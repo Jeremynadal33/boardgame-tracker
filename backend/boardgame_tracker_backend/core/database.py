@@ -3,7 +3,7 @@ from boardgame_tracker_backend.core.config import settings
 
 # Engine is the low-level interface to the database
 # We will use it to create sessions that allows us
-# to interact with the database with miore control
+# to interact with the database with more control
 # using transactions and allowing us to map models to tables (ORM)
 
 if settings.DATABASE_TYPE == "sqlite":
