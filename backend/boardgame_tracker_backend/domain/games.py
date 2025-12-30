@@ -4,19 +4,26 @@ from typing import Sequence
 
 from boardgame_tracker_backend.models.game import Game, GameCreate
 
+from pydantic import ValidationError
+
 # Define domain-specific exceptions
+
 
 class GameAlreadyExistsError(Exception):
     def __init__(self, name: str):
         self.name = name
         super().__init__(f"Game with name '{name}' already exists")
 
+
 class GameCreationError(Exception):
     pass
 
 
-def create_game(*, session: Session, game_in: GameCreate) -> Game:
+class GameValidationError(Exception):
+    pass
 
+
+def create_game(*, session: Session, game_in: GameCreate) -> Game:
     try:
         db_game = Game.model_validate(game_in)
         session.add(db_game)
@@ -25,14 +32,18 @@ def create_game(*, session: Session, game_in: GameCreate) -> Game:
         return db_game
     except IntegrityError as e:
         session.rollback()
-        error_msg = str(e.orig) if hasattr(e, 'orig') else str(e)
-        
+        error_msg = str(e.orig) if hasattr(e, "orig") else str(e)
+
         if "UNIQUE constraint failed: game.name" in error_msg:
             raise GameAlreadyExistsError(game_in.name)
         else:
-            raise GameCreationError(f"Failed to create game: {error_msg}")
-
-
+            raise GameCreationError(f"Unknown IntegrityError: {error_msg}")
+    except ValidationError as e:
+        session.rollback()
+        raise GameValidationError(f"Game validation error: {str(e)}")
+    except Exception as e:
+        session.rollback()
+        raise GameCreationError(f"Failed to create game: {str(e)}")
 
 
 def list_games(*, session: Session) -> Sequence[Game]:

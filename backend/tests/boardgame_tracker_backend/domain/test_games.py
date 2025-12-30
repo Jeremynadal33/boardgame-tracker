@@ -1,19 +1,20 @@
-from boardgame_tracker_backend.domain.games import create_game, list_games, GameAlreadyExistsError, GameCreationError
-from boardgame_tracker_backend.models.game import Game, GameCreate
+from boardgame_tracker_backend.domain.games import (
+    create_game,
+    list_games,
+    GameAlreadyExistsError,
+)
+from boardgame_tracker_backend.models.game import GameCreate
 
 from sqlmodel import Session
 
 from pytest import raises
 
 catan_game_in = GameCreate(
-    name="Catan",
-    min_players=3,
-    max_players=4,
-    description="A popular board game"
+    name="Catan", min_players=3, max_players=4, description="A popular board game"
 )
 
+
 def test_create_game_success(db: Session) -> None:
-    
     game = create_game(session=db, game_in=catan_game_in)
 
     assert game.id is not None
@@ -22,7 +23,8 @@ def test_create_game_success(db: Session) -> None:
     assert game.max_players == 4
     assert game.description == "A popular board game"
 
-def test_create_game_already_exists(db: Session) -> None:    
+
+def test_create_game_already_exists(db: Session) -> None:
     # First creation should succeed
     create_game(session=db, game_in=catan_game_in)
 
@@ -40,7 +42,7 @@ def test_list_games(db: Session) -> None:
         name="Pandemic",
         min_players=2,
         max_players=4,
-        description="A cooperative board game"
+        description="A cooperative board game",
     )
 
     create_game(session=db, game_in=catan_game_in)
