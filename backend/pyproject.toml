@@ -17,6 +17,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-cov==4.1.0",
 ]
 
 [tool.uv]
@@ -25,4 +26,11 @@ package = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-v -s"
+addopts = [
+    "--cov=boardgame_tracker_backend",
+    "--cov-report=term-missing",
+    "--strict-markers",
+    "--strict-config",
+    "-v",
+    "-s",
+]

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from boardgame_tracker_backend.api.dependencies import SessionDep
+from boardgame_tracker_backend.api.dependencies import SessionDep, CurrentPlayerDep
 from boardgame_tracker_backend.models.game import GameCreate, Game
 from boardgame_tracker_backend.domain import games
 
-from typing import Any
+from typing import Any, Sequence
 
 
 router = APIRouter(
@@ -40,7 +40,7 @@ def create_game(*, session: SessionDep, game_in: GameCreate) -> Any:
 
 
 @router.get("/")
-def list_games(*, session: SessionDep) -> list[Game]:
+def list_games(*, session: SessionDep) -> Sequence[Game]:
     """
     List all games.
     """

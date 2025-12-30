@@ -21,27 +21,26 @@ backend/
 ├── uv.lock
 ├── scripts/
 │   └── player.py
-├── src/
-│   ├── boardgame_tracker_backend/
-│   │   ├── main.py # Instanciate the actual app
-│   │   ├── api/ # Contains 
-│   │   │   ├── all_routes.py # Aggregates all routes for easier import in main app
-│   │   │   ├── dependencies.py # What is use in many APIs
-│   │   │   └── routers/ # Declare all routes but are passthrough to domain functions
-│   │   │       ├── game_sessions.py
-│   │   │       ├── games.py
-│   │   │       └── players.py
-│   │   ├── core/
-│   │   │   ├── config.py # All config, env, env vars, ...
-│   │   │   ├── database.py # Create the SQLAlchemy engine
-│   │   │   └── security.py # 
-│   │   ├── domain/ # The actual logic (what does it mean to create a user ?, ...)
-│   │   │   └── games.py
-│   │   └── models/ # ORM models + corresponding "pydantic" schemas 
-│   │       ├── game.py
-│   │       ├── game_result.py
-│   │       ├── game_session.py
-│   │       └── player.py
+├── boardgame_tracker_backend/
+│   ├── main.py # Instanciate the actual app
+│   ├── api/ # Contains 
+│   │   ├── all_routes.py # Aggregates all routes for easier import in main app
+│   │   ├── dependencies.py # What is use in many APIs
+│   │   └── routers/ # Declare all routes but are passthrough to domain functions
+│   │       ├── game_sessions.py
+│   │       ├── games.py
+│   │       └── players.py
+│   ├── core/
+│   │   ├── config.py # All config, env, env vars, ...
+│   │   ├── database.py # Create the SQLAlchemy engine
+│   │   └── security.py # 
+│   ├── domain/ # The actual logic (what does it mean to create a user ?, ...)
+│   │   └── games.py
+│   └── models/ # ORM models + corresponding "pydantic" schemas 
+│       ├── game.py
+│       ├── game_result.py
+│       ├── game_session.py
+│       └── player.py
 └── tests/
     └── boardgame_tracker_backend/
         └── test_main.py
