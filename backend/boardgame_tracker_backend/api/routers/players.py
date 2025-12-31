@@ -4,7 +4,7 @@ from typing import Annotated
 
 from typing import Any
 
-from boardgame_tracker_backend.api.dependencies import SessionDep
+from boardgame_tracker_backend.api.dependencies import SessionDep, CurrentPlayerDep
 
 from boardgame_tracker_backend.models.player import (
     PlayerCreate,
@@ -20,8 +20,8 @@ router = APIRouter(
     tags=["players"],
 )
 
-
-@router.post("/signup", response_model=PlayerPublic)
+###### Open endpoints ######
+@router.post("/signup", response_model=PlayerPublic, status_code=status.HTTP_201_CREATED)
 def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     """
     Create new player.
@@ -44,8 +44,15 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
 
     return db_player
 
+@router.get("/me", response_model=PlayerPublic, status_code=status.HTTP_200_OK)
+def read_current_player(current_player: CurrentPlayerDep) -> Any:
+    """
+    Get current player.
+    """
+    return current_player
 
-@router.get("", response_model=PlayersPublic)
+
+@router.get("", response_model=PlayersPublic, status_code=status.HTTP_200_OK)
 def list_players(*, session: SessionDep) -> Any:
     """
     List all players.
@@ -54,7 +61,7 @@ def list_players(*, session: SessionDep) -> Any:
     return players.list_players(session=session)
 
 
-@router.post("/login/access-token", response_model=Token)
+@router.post("/login/access-token", response_model=Token, status_code=status.HTTP_200_OK)
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -85,3 +92,5 @@ def login_access_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
         )
+
+###### Protected endpoints : Must use valid token ######

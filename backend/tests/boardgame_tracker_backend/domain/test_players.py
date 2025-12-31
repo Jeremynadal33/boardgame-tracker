@@ -4,10 +4,12 @@ from boardgame_tracker_backend.domain.players import (
     get_player_by_email,
     list_players,
     authenticate,
+    create_access_token,
     PlayerNotFoundError,
     InvalidCredentialsError,
+    InactivePlayerError,
 )
-from boardgame_tracker_backend.models.player import PlayerCreate, PlayersPublic
+from boardgame_tracker_backend.models.player import PlayerCreate, PlayersPublic, Token
 
 from sqlmodel import Session
 from pytest import raises
@@ -132,3 +134,50 @@ class TestAuthenticate:
             authenticate(
                 session=db, email=" toto@gmail.com ", password="securepassword123"
             )
+
+
+class TestCreateAccessToken:
+    def test_create_access_token_success(self, db: Session) -> None:
+        """Test successful token creation for valid, active player"""
+        # Create a player first
+        created_player = register_player(session=db, player_in=player_in)
+        
+        # Create access token with correct credentials
+        token = create_access_token(
+            session=db, email="toto@gmail.com", password="securepassword123"
+        )
+        
+        assert token is not None
+        assert isinstance(token, Token)
+        assert token.access_token is not None
+        assert len(token.access_token) > 0
+
+    def test_create_access_token_inactive_player(self, db: Session) -> None:
+        """Test token creation fails for inactive player"""
+        # Create a player first
+        created_player = register_player(session=db, player_in=player_in)
+        
+        # Set player as inactive
+        created_player.is_active = False
+        db.add(created_player)
+        db.commit()
+        
+        # Try to create token for inactive player
+        with raises(InactivePlayerError):
+            create_access_token(
+                session=db, email="toto@gmail.com", password="securepassword123"
+            )
+
+    @pytest.mark.parametrize("email,password,expected_exception", [
+        ("nonexistent@gmail.com", "validpassword", PlayerNotFoundError),
+        ("toto@gmail.com", "wrongpassword", InvalidCredentialsError),
+    ])
+    def test_create_access_token_authentication_failures(self, email, password, expected_exception, db: Session) -> None:
+        """Test token creation fails with invalid credentials"""
+        # Create a player for the second test case
+        if email == "toto@gmail.com":
+            register_player(session=db, player_in=player_in)
+        
+        # Verify appropriate exception is raised
+        with raises(expected_exception):
+            create_access_token(session=db, email=email, password=password)

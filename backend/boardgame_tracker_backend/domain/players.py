@@ -125,5 +125,7 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
         raise PlayerNotFoundError(f"Player with email {email} not found")
     except InvalidCredentialsError:
         raise InvalidCredentialsError("Incorrect email or password")
+    except InactivePlayerError:
+        raise InactivePlayerError("Inactive player")
     except Exception as e:
         raise TokenCreationError(f"Failed to create access token: {str(e)}")

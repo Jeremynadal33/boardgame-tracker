@@ -22,7 +22,7 @@ class TestRegisterPlayer:
             "password": "securepassword123",
         }
         response = client.post(players_base_endpoint + "signup", json=player_data)
-        assert response.status_code == 200
+        assert response.status_code == 201
         data = response.json()
         assert data["pseudo"] == "toto"
         assert data["email"] == "toto@gmail.com"
@@ -32,7 +32,7 @@ class TestRegisterPlayer:
 class TestLoginAccessToken:
     """Tests for the /players/login/access-token endpoint"""
 
-    login_url = players_base_endpoint + "login/access-token"
+    login_url = settings.LOGIN_ENDPOINT
     login_data = {"username": "test@example.com", "password": "testpassword"}
 
     @patch("boardgame_tracker_backend.domain.players.create_access_token")

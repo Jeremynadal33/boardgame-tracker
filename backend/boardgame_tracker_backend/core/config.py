@@ -11,9 +11,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     API_V1_STR: str = "/api/v1"
+    LOGIN_ENDPOINT: str = f"{API_V1_STR}/players/login/access-token"
 
     # Generate a random secret key if not provided, for development purposes
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = "lasuperclefsecretouais" # secrets.token_urlsafe(32)
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 

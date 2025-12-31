@@ -27,7 +27,7 @@ SessionDep = Annotated[Session, Depends(get_db)]
 # The tokenUrl is the endpoint where clients can get the token
 # Must match the actual login endpoint in boardgame_tracker_backend/api/routers/players.py
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/players/login/access-token"
+    tokenUrl=settings.LOGIN_ENDPOINT
 )
 
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
@@ -44,19 +44,19 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
         )
-    except (InvalidTokenError, ValidationError):
+    except (InvalidTokenError, ValidationError) as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials: {str(e)}",
         )
 
     # Convert string UUID back to UUID object for database query
     try:
         player_id = UUID(token_data.sub) if token_data.sub else None
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials: {str(e)}",
         )
 
     if not player_id:

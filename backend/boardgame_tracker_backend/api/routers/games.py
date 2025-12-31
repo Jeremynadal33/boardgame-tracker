@@ -12,17 +12,25 @@ router = APIRouter(
 )
 
 
-@router.post("/")
-def create_game(*, session: SessionDep, game_in: GameCreate) -> Any:
+###### Open endpoints ######
+
+@router.get("/", response_model=Sequence[Game], status_code=status.HTTP_200_OK)
+def list_games(*, session: SessionDep) -> Sequence[Game]:
+    """
+    List all games.
+    """
+
+    return games.list_games(session=session)
+###### Protected endpoints : Must use valid token ######
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_game(*, session: SessionDep, current_player: CurrentPlayerDep, game_in: GameCreate) -> Any:
     """
     Create new game.
     """
 
-    # TODO : add created_by metadata in the Game model
-    # TODO : get current player to add it to the metadata
-
     try:
-        db_game = games.create_game(session=session, game_in=game_in)
+        db_game = games.create_game(session=session, current_player=current_player, game_in=game_in)
     except games.GameAlreadyExistsError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -30,19 +38,12 @@ def create_game(*, session: SessionDep, game_in: GameCreate) -> Any:
         )
     except games.GameCreationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
+    except games.GameValidationError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred",
+            detail=f"An unexpected error occurred: {str(e)}",
         )
 
     return db_game
-
-
-@router.get("/")
-def list_games(*, session: SessionDep) -> Sequence[Game]:
-    """
-    List all games.
-    """
-
-    return games.list_games(session=session)
