@@ -6,6 +6,8 @@ from fastapi.testclient import TestClient
 import pytest
 from unittest.mock import patch
 
+from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
+
 #### Testing api/v1/players endpoints ####
 players_base_endpoint = f"{settings.API_V1_STR}/players/"
 
@@ -161,3 +163,63 @@ class TestLoginAccessToken:
 
         # Unprocessable Entity for validation errors
         assert response.status_code == 422
+
+
+#### Protected endpoints ####
+class TestReadCurrentPlayer:
+    """Tests for the /players/me endpoint"""
+
+    me_url = players_base_endpoint + "me"
+
+    def test_read_current_player_success(
+        self, client: TestClient, db: players.Session
+    ) -> None:
+        """Test successful retrieval of current player info"""
+        # First, create and authenticate a test player
+
+        test_email = "toto@example.com"
+
+        header = authentication_token_from_email(client=client, email=test_email, db=db)
+        response = client.get(self.me_url, headers=header)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["email"] == test_email
+
+    def test_read_current_player_unauthorized(self, client: TestClient) -> None:
+        """Test accessing /me without token returns 401 error"""
+        response = client.get(self.me_url)
+
+        assert response.status_code == 401
+        data = response.json()
+        assert data["detail"] == "Not authenticated"
+
+
+class TestListPlayers:
+    """Tests for the /players endpoint"""
+
+    list_url = players_base_endpoint
+
+    def test_list_players_success(
+        self, client: TestClient, db: players.Session
+    ) -> None:
+        """Test successful retrieval of players list"""
+        # First, create and authenticate a test player
+
+        test_email = "toto@example.com"
+
+        header = authentication_token_from_email(client=client, email=test_email, db=db)
+        response = client.get(self.list_url, headers=header)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert any(player["email"] == test_email for player in data["players"])
+
+    def test_list_players_unauthorized(self, client: TestClient) -> None:
+        """Test accessing /players without token returns 401 error"""
+        response = client.get(self.list_url)
+
+        assert response.status_code == 401
+        data = response.json()
+        assert data["detail"] == "Not authenticated"

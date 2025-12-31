@@ -23,7 +23,7 @@ backend/
 │   └── player.py
 ├── boardgame_tracker_backend/
 │   ├── main.py # Instanciate the actual app
-│   ├── api/ # Contains 
+│   ├── api/ # Contains API routing and dependency management
 │   │   ├── all_routes.py # Aggregates all routes for easier import in main app
 │   │   ├── dependencies.py # What is use in many APIs
 │   │   └── routers/ # Declare all routes but are passthrough to domain functions
@@ -102,3 +102,7 @@ erDiagram
 <li>
 
 </details>
+
+
+### Getting a tunnel using ngrok
+Make a tunnel running ```ngrok http 8000```. Ngrok will print a forwarding URL (for example, `https://<random-subdomain>.ngrok-free.app`); use that URL as the base URL to access the API.

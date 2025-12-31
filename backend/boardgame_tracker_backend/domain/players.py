@@ -1,6 +1,7 @@
 from boardgame_tracker_backend.models.player import (
     Player,
     PlayerCreate,
+    PlayerUpdate,
     PlayerPublic,
     PlayersPublic,
     Token,
@@ -28,6 +29,10 @@ class PlayerNotFoundError(Exception):
 
 
 class PlayerCreationError(Exception):
+    pass
+
+
+class PlayerUpdateError(Exception):
     pass
 
 
@@ -81,6 +86,42 @@ def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
         raise PlayerCreationError(f"Unknown error while creating player: {str(e)}")
 
 
+def update_player(
+    *, session: Session, db_player: Player, player_in: PlayerUpdate
+) -> Player:
+    """
+    Update an existing player's information. Cannot update email or id.
+    """
+    try:
+        player_data = player_in.model_dump(exclude_unset=True)
+
+        if "password" in player_data:
+            hashed_password = get_password_hash(player_data.pop("password"))
+            player_data["hashed_password"] = hashed_password
+
+        db_player.sqlmodel_update(player_data)
+
+        session.add(db_player)
+        session.commit()
+        session.refresh(db_player)
+        return db_player
+
+    except ValidationError as e:
+        session.rollback()
+        raise PlayerValidationError(f"Player validation error: {str(e)}")
+    except IntegrityError as e:
+        session.rollback()
+        error_msg = str(e.orig) if hasattr(e, "orig") else str(e)
+
+        if "UNIQUE constraint failed: player.pseudo" in error_msg:
+            raise PlayerAlreadyExistsError("pseudo", player_in.pseudo or "")
+        else:
+            raise PlayerUpdateError(f"Unknown IntegrityError: {error_msg}")
+    except Exception as e:
+        session.rollback()
+        raise PlayerUpdateError(f"Unknown error while updating player: {str(e)}")
+
+
 def list_players(*, session: Session) -> PlayersPublic:
     count_statement = select(func.count()).select_from(Player)
     count = session.exec(count_statement).one()
@@ -114,7 +155,7 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
         player = authenticate(session=session, email=email, password=password)
 
         if not player.is_active:
-            raise InactivePlayerError("Inactive player")
+            raise InactivePlayerError("Player account is inactive")
 
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = security.create_access_token(
@@ -126,6 +167,7 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
     except InvalidCredentialsError:
         raise InvalidCredentialsError("Incorrect email or password")
     except InactivePlayerError:
-        raise InactivePlayerError("Inactive player")
+        # Re-raise as-is to preserve the specific error type
+        raise
     except Exception as e:
         raise TokenCreationError(f"Failed to create access token: {str(e)}")

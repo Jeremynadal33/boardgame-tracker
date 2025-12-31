@@ -23,7 +23,8 @@ def init_db(session: Session) -> None:
     # It does not allow altering existing tables either
     # Does not overrite existing data
     SQLModel.metadata.create_all(engine)
-    dummy_data(session)
+    if settings.ENV == "dev":
+        dummy_data(session)
 
 
 if __name__ == "__main__":
@@ -34,6 +35,9 @@ if __name__ == "__main__":
 
 
 def dummy_data(session: Session) -> None:
+    """
+    Only for dev purposes (Postman already have its token registered for tests)
+    """
     from boardgame_tracker_backend.models.player import Player
 
     # Add a dummy player

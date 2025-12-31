@@ -27,6 +27,7 @@ class TestCreateGame:
         assert data["min_players"] == 3
         assert data["max_players"] == 4
         assert data["description"] == "A popular board game"
+        assert "created_by" in data.keys()
 
     def test_create_game_already_exists(
         self, client: TestClient, normal_player_token_headers: dict[str, str]
@@ -64,6 +65,16 @@ class TestCreateGame:
         assert (
             response.status_code == 422
         )  # Unprocessable Entity returned by FastAPI for validation errors
+
+    def test_create_game_no_headers(self, client: TestClient) -> None:
+        game_data = {
+            "name": "Catan",
+            "min_players": 3,
+            "max_players": 4,
+            "description": "A popular board game",
+        }
+        response = client.post(games_endpoint, json=game_data)
+        assert response.status_code == 401  # Unauthorized
 
 
 class TestListGames:

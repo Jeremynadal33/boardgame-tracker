@@ -42,19 +42,19 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
         )
-    except (InvalidTokenError, ValidationError) as e:
+    except (InvalidTokenError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Could not validate credentials: {str(e)}",
+            detail="Could not validate credentials",
         )
 
     # Convert string UUID back to UUID object for database query
     try:
         player_id = UUID(token_data.sub) if token_data.sub else None
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Could not validate credentials: {str(e)}",
+            detail="Could not validate credentials",
         )
 
     if not player_id:

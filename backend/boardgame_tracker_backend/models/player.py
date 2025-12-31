@@ -37,6 +37,15 @@ class PlayerCreate(PlayerBase):
     password: str = Field(min_length=8, max_length=72)
 
 
+### Represents data needed to update a player, everything optional
+### Cannot update email or id so we can't inherite from PlayerBase
+class PlayerUpdate(SQLModel):
+    pseudo: str | None = Field(default=None, max_length=30)
+    password: str | None = Field(default=None, min_length=8, max_length=72)
+    city: str | None = None
+    country: str | None = None
+
+
 ### Represents a player that can be publicly shared
 class PlayerPublic(PlayerBase):
     id: UUID

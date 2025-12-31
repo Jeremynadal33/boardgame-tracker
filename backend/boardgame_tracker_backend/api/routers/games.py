@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 from boardgame_tracker_backend.api.dependencies import SessionDep, CurrentPlayerDep
-from boardgame_tracker_backend.models.game import GameCreate, Game
+from boardgame_tracker_backend.models.game import GameCreate, Game, GamePublic
 from boardgame_tracker_backend.domain import games
 
-from typing import Any, Sequence
+from typing import Sequence
 
 
 router = APIRouter(
@@ -15,7 +15,7 @@ router = APIRouter(
 ###### Open endpoints ######
 
 
-@router.get("/", response_model=Sequence[Game], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=Sequence[GamePublic], status_code=status.HTTP_200_OK)
 def list_games(*, session: SessionDep) -> Sequence[Game]:
     """
     List all games.
@@ -27,10 +27,10 @@ def list_games(*, session: SessionDep) -> Sequence[Game]:
 ###### Protected endpoints : Must use valid token ######
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=GamePublic, status_code=status.HTTP_201_CREATED)
 def create_game(
     *, session: SessionDep, current_player: CurrentPlayerDep, game_in: GameCreate
-) -> Any:
+) -> Game:
     """
     Create new game.
     """
@@ -50,10 +50,10 @@ def create_game(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}",
+            detail="An unexpected error occurred",
         )
 
     return db_game

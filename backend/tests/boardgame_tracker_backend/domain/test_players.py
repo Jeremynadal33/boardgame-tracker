@@ -1,5 +1,6 @@
 from boardgame_tracker_backend.domain.players import (
     register_player,
+    update_player,
     PlayerAlreadyExistsError,
     get_player_by_email,
     list_players,
@@ -9,7 +10,15 @@ from boardgame_tracker_backend.domain.players import (
     InvalidCredentialsError,
     InactivePlayerError,
 )
-from boardgame_tracker_backend.models.player import PlayerCreate, PlayersPublic, Token
+
+from boardgame_tracker_backend.core.security import verify_password
+
+from boardgame_tracker_backend.models.player import (
+    PlayerCreate,
+    PlayersPublic,
+    Token,
+    PlayerUpdate,
+)
 
 from sqlmodel import Session
 from pytest import raises
@@ -33,10 +42,10 @@ class TestRegisterPlayer:
         register_player(session=db, player_in=player_in)
 
         # Second creation with the same email should raise an error
-        updated_player_in = player_in.model_copy()
-        updated_player_in.email = "other@gmail.com"
+        player_update_data = player_in.model_copy()
+        player_update_data.email = "other@gmail.com"
         with raises(PlayerAlreadyExistsError) as exc_info:
-            register_player(session=db, player_in=updated_player_in)
+            register_player(session=db, player_in=player_update_data)
 
         assert exc_info.value.type == "pseudo"
         assert exc_info.value.input == "toto"
@@ -46,13 +55,76 @@ class TestRegisterPlayer:
         register_player(session=db, player_in=player_in)
 
         # Second creation with the same email should raise an error
-        updated_player_in = player_in.model_copy()
-        updated_player_in.pseudo = "otherpseudo"
+        player_update_data = player_in.model_copy()
+        player_update_data.pseudo = "otherpseudo"
         with raises(PlayerAlreadyExistsError) as exc_info:
-            register_player(session=db, player_in=updated_player_in)
+            register_player(session=db, player_in=player_update_data)
 
         assert exc_info.value.type == "email"
         assert exc_info.value.input == "toto@gmail.com"
+
+
+class TestUpdatePlayer:
+    def test_update_player_update_password_success(self, db: Session) -> None:
+        # Create a player first
+        created_player = register_player(session=db, player_in=player_in)
+        new_password = "newsecurepassword456"
+        player_update = PlayerUpdate(password=new_password)
+
+        updated_player = update_player(
+            session=db, db_player=created_player, player_in=player_update
+        )
+
+        assert updated_player.id == created_player.id
+        assert updated_player.pseudo == created_player.pseudo
+        assert verify_password(new_password, updated_player.hashed_password)
+
+    def test_update_player_update_pseudo_success(self, db: Session) -> None:
+        # Create a player first
+        created_player = register_player(session=db, player_in=player_in)
+        new_pseudo = "newtoto"
+        player_update = PlayerUpdate(pseudo=new_pseudo)
+
+        updated_player = update_player(
+            session=db, db_player=created_player, player_in=player_update
+        )
+
+        assert updated_player.id == created_player.id
+        assert updated_player.pseudo == new_pseudo
+        assert updated_player.email == created_player.email
+
+    def test_update_player_update_city_country_success(self, db: Session) -> None:
+        # Create a player first
+        created_player = register_player(session=db, player_in=player_in)
+        player_update_data = PlayerUpdate(country="New Country", city="New City")
+
+        updated_player = update_player(
+            session=db, db_player=created_player, player_in=player_update_data
+        )
+
+        assert updated_player.id == created_player.id
+        assert updated_player.city == "New City"
+        assert updated_player.country == "New Country"
+
+    def test_update_player_pseudo_already_exists(self, db: Session) -> None:
+        # Create two players first
+        register_player(session=db, player_in=player_in)
+        another_player_in = PlayerCreate(
+            pseudo="alice", email="alice@gmail.com", password="anothersecurepassword"
+        )
+        another_created_player = register_player(
+            session=db, player_in=another_player_in
+        )
+
+        # Attempt to update second player's pseudo to first player's pseudo
+        player_update = PlayerUpdate(pseudo="toto")
+
+        with raises(PlayerAlreadyExistsError):
+            update_player(
+                session=db,
+                db_player=another_created_player,
+                player_in=player_update,
+            )
 
 
 class TestListPlayers:
@@ -140,7 +212,7 @@ class TestCreateAccessToken:
     def test_create_access_token_success(self, db: Session) -> None:
         """Test successful token creation for valid, active player"""
         # Create a player first
-        created_player = register_player(session=db, player_in=player_in)
+        register_player(session=db, player_in=player_in)
 
         # Create access token with correct credentials
         token = create_access_token(

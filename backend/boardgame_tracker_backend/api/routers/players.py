@@ -4,7 +4,11 @@ from typing import Annotated
 
 from typing import Any
 
-from boardgame_tracker_backend.api.dependencies import SessionDep, CurrentPlayerDep
+from boardgame_tracker_backend.api.dependencies import (
+    SessionDep,
+    CurrentPlayerDep,
+    get_current_player,
+)
 
 from boardgame_tracker_backend.models.player import (
     PlayerCreate,
@@ -48,23 +52,6 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     return db_player
 
 
-@router.get("/me", response_model=PlayerPublic, status_code=status.HTTP_200_OK)
-def read_current_player(current_player: CurrentPlayerDep) -> Any:
-    """
-    Get current player.
-    """
-    return current_player
-
-
-@router.get("", response_model=PlayersPublic, status_code=status.HTTP_200_OK)
-def list_players(*, session: SessionDep) -> Any:
-    """
-    List all players.
-    """
-    # TODO: add error handling
-    return players.list_players(session=session)
-
-
 @router.post(
     "/login/access-token", response_model=Token, status_code=status.HTTP_200_OK
 )
@@ -101,3 +88,23 @@ def login_access_token(
 
 
 ###### Protected endpoints : Must use valid token ######
+@router.get("/me", response_model=PlayerPublic, status_code=status.HTTP_200_OK)
+def read_current_player(current_player: CurrentPlayerDep) -> Any:
+    """
+    Get current player.
+    """
+    return current_player
+
+
+@router.get(
+    "",
+    response_model=PlayersPublic,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(get_current_player)],
+)
+def list_players(*, session: SessionDep) -> Any:
+    """
+    List all players.
+    """
+    # TODO: add error handling
+    return players.list_players(session=session)
