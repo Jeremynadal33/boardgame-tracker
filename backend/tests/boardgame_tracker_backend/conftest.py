@@ -8,7 +8,6 @@ from sqlalchemy.pool import StaticPool
 from boardgame_tracker_backend.main import app
 from boardgame_tracker_backend.models import *
 from boardgame_tracker_backend.api.dependencies import get_db
-from boardgame_tracker_backend.core.config import settings
 
 from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
 

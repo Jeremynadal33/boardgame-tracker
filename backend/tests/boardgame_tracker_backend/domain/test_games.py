@@ -3,14 +3,11 @@ from boardgame_tracker_backend.domain.games import (
     list_games,
     GameAlreadyExistsError,
 )
-from boardgame_tracker_backend.domain.players import register_player
 from boardgame_tracker_backend.models.game import GameCreate
-from boardgame_tracker_backend.models.player import PlayerCreate
 
 from sqlmodel import Session
 
 from pytest import raises
-from tests.boardgame_tracker_backend.utils.utils import random_lower_string, random_email
 from tests.boardgame_tracker_backend.utils.player import create_random_player
 
 catan_game_in = GameCreate(

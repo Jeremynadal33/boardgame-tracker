@@ -24,9 +24,10 @@ class GameValidationError(Exception):
     pass
 
 
-def create_game(*, session: Session, current_player: Player, game_in: GameCreate) -> Game:
+def create_game(
+    *, session: Session, current_player: Player, game_in: GameCreate
+) -> Game:
     try:
-
         db_game = Game.model_validate(game_in, update={"created_by": current_player.id})
         session.add(db_game)
         session.commit()

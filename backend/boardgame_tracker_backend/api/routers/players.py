@@ -20,8 +20,11 @@ router = APIRouter(
     tags=["players"],
 )
 
+
 ###### Open endpoints ######
-@router.post("/signup", response_model=PlayerPublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/signup", response_model=PlayerPublic, status_code=status.HTTP_201_CREATED
+)
 def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     """
     Create new player.
@@ -44,6 +47,7 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
 
     return db_player
 
+
 @router.get("/me", response_model=PlayerPublic, status_code=status.HTTP_200_OK)
 def read_current_player(current_player: CurrentPlayerDep) -> Any:
     """
@@ -61,7 +65,9 @@ def list_players(*, session: SessionDep) -> Any:
     return players.list_players(session=session)
 
 
-@router.post("/login/access-token", response_model=Token, status_code=status.HTTP_200_OK)
+@router.post(
+    "/login/access-token", response_model=Token, status_code=status.HTTP_200_OK
+)
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -92,5 +98,6 @@ def login_access_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
         )
+
 
 ###### Protected endpoints : Must use valid token ######

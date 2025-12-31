@@ -35,13 +35,18 @@ if __name__ == "__main__":
 
 def dummy_data(session: Session) -> None:
     from boardgame_tracker_backend.models.player import Player
-    from boardgame_tracker_backend.models.game import Game
 
     # Add a dummy player
 
-    dummy_player = Player(pseudo="toto", email="toto@toto.com", hashed_password="$2b$12$.cDdQZfBLAKRouyn66k/ieCaVVcB/23bQbWw42vEOMFJkB0oKN3WC")
-    
-    if not session.exec(select(Player).where(Player.email == dummy_player.email)).first():
+    dummy_player = Player(
+        pseudo="toto",
+        email="toto@toto.com",
+        hashed_password="$2b$12$.cDdQZfBLAKRouyn66k/ieCaVVcB/23bQbWw42vEOMFJkB0oKN3WC",
+    )
+
+    if not session.exec(
+        select(Player).where(Player.email == dummy_player.email)
+    ).first():
         session.add(dummy_player)
         session.commit()
         session.refresh(dummy_player)

@@ -19,12 +19,13 @@ class Game(GameBase, table=True):
     created_by: UUID = Field(
         foreign_key="player.id",
         nullable=False,
-    ) # References the player who created the game
+    )  # References the player who created the game
 
 
 ### Represents data needed to create a new game
 class GameCreate(GameBase):
     pass
+
 
 class GamePublic(GameBase):
     id: UUID

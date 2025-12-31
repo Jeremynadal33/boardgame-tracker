@@ -1,5 +1,3 @@
-import secrets
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,7 +12,7 @@ class Settings(BaseSettings):
     LOGIN_ENDPOINT: str = f"{API_V1_STR}/players/login/access-token"
 
     # Generate a random secret key if not provided, for development purposes
-    SECRET_KEY: str = "lasuperclefsecretouais" # secrets.token_urlsafe(32)
+    SECRET_KEY: str = "lasuperclefsecretouais"  # secrets.token_urlsafe(32)
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 

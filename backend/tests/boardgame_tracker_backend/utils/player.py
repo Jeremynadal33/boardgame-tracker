@@ -6,7 +6,10 @@ from boardgame_tracker_backend.models.player import PlayerCreate
 from boardgame_tracker_backend.domain import players
 from boardgame_tracker_backend.domain.players import register_player
 
-from tests.boardgame_tracker_backend.utils.utils import random_lower_string, random_email
+from tests.boardgame_tracker_backend.utils.utils import (
+    random_lower_string,
+    random_email,
+)
 
 
 def create_random_player(db: Session):
@@ -14,7 +17,7 @@ def create_random_player(db: Session):
     player_in = PlayerCreate(
         pseudo=random_lower_string(),
         email=random_email(),
-        password=random_lower_string()
+        password=random_lower_string(),
     )
     return register_player(session=db, player_in=player_in)
 
