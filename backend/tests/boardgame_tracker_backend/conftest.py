@@ -9,7 +9,11 @@ from boardgame_tracker_backend.main import app
 from boardgame_tracker_backend.models import *
 from boardgame_tracker_backend.api.dependencies import get_db
 
+from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
+
 IN_MEMORY_TESTING_DATABASE_URL = "sqlite:///:memory:"
+EMAIL_TEST_PLAYER = "test@example.com"
+
 engine = create_engine(
     IN_MEMORY_TESTING_DATABASE_URL,
     connect_args={
@@ -51,3 +55,10 @@ def client() -> Generator[TestClient, None, None]:
         yield c
     # Clean up the override after tests
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+def normal_player_token_headers(client: TestClient, db: Session) -> dict[str, str]:
+    return authentication_token_from_email(
+        client=client, email=EMAIL_TEST_PLAYER, db=db
+    )

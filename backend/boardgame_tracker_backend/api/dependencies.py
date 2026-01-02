@@ -26,9 +26,7 @@ SessionDep = Annotated[Session, Depends(get_db)]
 # Not entirely sure about why TokenDep is needed but it looks like best practice
 # The tokenUrl is the endpoint where clients can get the token
 # Must match the actual login endpoint in boardgame_tracker_backend/api/routers/players.py
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/players/login/access-token"
-)
+reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=settings.LOGIN_ENDPOINT)
 
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
@@ -77,4 +75,4 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
     return player
 
 
-CurrentPlayer = Annotated[Player, Depends(get_current_player)]
+CurrentPlayerDep = Annotated[Player, Depends(get_current_player)]

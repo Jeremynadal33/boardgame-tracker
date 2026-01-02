@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Sequence
 
 from boardgame_tracker_backend.models.game import Game, GameCreate
+from boardgame_tracker_backend.models.player import Player
 
 from pydantic import ValidationError
 
@@ -23,9 +24,11 @@ class GameValidationError(Exception):
     pass
 
 
-def create_game(*, session: Session, game_in: GameCreate) -> Game:
+def create_game(
+    *, session: Session, current_player: Player, game_in: GameCreate
+) -> Game:
     try:
-        db_game = Game.model_validate(game_in)
+        db_game = Game.model_validate(game_in, update={"created_by": current_player.id})
         session.add(db_game)
         session.commit()
         session.refresh(db_game)

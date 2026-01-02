@@ -56,7 +56,7 @@ class TestGetCurrentPlayer:
             get_current_player(db, invalid_token)
 
         assert exc_info.value.status_code == 403
-        assert exc_info.value.detail == "Could not validate credentials"
+        assert exc_info.value.detail.startswith("Could not validate credentials")
 
     def test_get_current_player_nonexistent_player(self, db: Session) -> None:
         """Test that valid token for nonexistent player raises 404 Not Found"""

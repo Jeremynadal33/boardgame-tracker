@@ -16,8 +16,17 @@ class Game(GameBase, table=True):
     id: UUID | None = Field(
         default_factory=uuid4, primary_key=True
     )  # Will be fed by the db
+    created_by: UUID = Field(
+        foreign_key="player.id",
+        nullable=False,
+    )  # References the player who created the game
 
 
 ### Represents data needed to create a new game
 class GameCreate(GameBase):
     pass
+
+
+class GamePublic(GameBase):
+    id: UUID
+    created_by: UUID
