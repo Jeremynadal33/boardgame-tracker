@@ -28,10 +28,8 @@ def player_authentication_headers(
     data = {"username": email, "password": password}
 
     r = client.post(settings.LOGIN_ENDPOINT, data=data)
-    response = r.json()
-    auth_token = response["access_token"]
-    headers = {"Authorization": f"Bearer {auth_token}"}
-    return headers
+    auth_token = r.cookies[settings.ACCESS_TOKEN_COOKIE_NAME]
+    return {"Cookie": f"{settings.ACCESS_TOKEN_COOKIE_NAME}={auth_token}"}
 
 
 def authentication_token_from_email(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Response, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 
@@ -10,11 +10,11 @@ from boardgame_tracker_backend.api.dependencies import (
     get_current_player,
 )
 
+from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.models.player import (
     PlayerCreate,
     PlayerPublic,
     PlayersPublic,
-    Token,
 )
 from boardgame_tracker_backend.domain import players
 
@@ -52,20 +52,27 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     return db_player
 
 
-@router.post(
-    "/login/access-token", response_model=Token, status_code=status.HTTP_200_OK
-)
+@router.post("/login/access-token", status_code=status.HTTP_204_NO_CONTENT)
 def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-) -> Token:
+    session: SessionDep,
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> None:
     """
-    OAuth2 compatible token login, get an access token for future requests
+    Log in: the access token is set in an HttpOnly cookie used for future requests
     """
     try:
-        token: Token = players.create_access_token(
+        token = players.create_access_token(
             session=session, email=form_data.username, password=form_data.password
         )
-        return token
+        response.set_cookie(
+            key=settings.ACCESS_TOKEN_COOKIE_NAME,
+            value=token.access_token,
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            httponly=True,
+            secure=settings.COOKIE_SECURE,
+            samesite="lax",
+        )
     except players.PlayerNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,6 +92,19 @@ def login_access_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred",
         )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> None:
+    """
+    Log out: remove the access token cookie
+    """
+    response.delete_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+    )
 
 
 ###### Protected endpoints : Must use valid token ######

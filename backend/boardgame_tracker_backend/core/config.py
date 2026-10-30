@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "lasuperclefsecretouais"  # secrets.token_urlsafe(32)
 
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
+    # Must be True in production (https). Set to False for local http development.
+    COOKIE_SECURE: bool = True
 
     # print("Loading settings from .env file")
     # print(f"model_config: {model_config}")

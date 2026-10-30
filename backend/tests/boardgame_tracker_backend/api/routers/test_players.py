@@ -41,7 +41,7 @@ class TestLoginAccessToken:
     def test_login_access_token_success(
         self, mock_create_token, client: TestClient
     ) -> None:
-        """Test successful login returns access token"""
+        """Test successful login sets the access token in an HttpOnly cookie"""
 
         mock_token = Token(access_token="fake-jwt-token", token_type="bearer")
         mock_create_token.return_value = mock_token
@@ -52,10 +52,12 @@ class TestLoginAccessToken:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["access_token"] == "fake-jwt-token"
-        assert data["token_type"] == "bearer"
+        assert response.status_code == 204
+        assert response.content == b""
+        set_cookie = response.headers["set-cookie"]
+        assert f"{settings.ACCESS_TOKEN_COOKIE_NAME}=fake-jwt-token" in set_cookie
+        assert "HttpOnly" in set_cookie
+        assert "SameSite=lax" in set_cookie
 
     @patch("boardgame_tracker_backend.domain.players.create_access_token")
     def test_login_access_token_player_not_found(
@@ -163,6 +165,20 @@ class TestLoginAccessToken:
 
         # Unprocessable Entity for validation errors
         assert response.status_code == 422
+
+
+class TestLogout:
+    """Tests for the /players/logout endpoint"""
+
+    logout_url = players_base_endpoint + "logout"
+
+    def test_logout_clears_cookie(self, client: TestClient) -> None:
+        response = client.post(self.logout_url)
+
+        assert response.status_code == 204
+        set_cookie = response.headers["set-cookie"]
+        assert f'{settings.ACCESS_TOKEN_COOKIE_NAME}=""' in set_cookie
+        assert "Max-Age=0" in set_cookie
 
 
 #### Protected endpoints ####

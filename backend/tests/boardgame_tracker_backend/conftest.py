@@ -8,8 +8,12 @@ from sqlalchemy.pool import StaticPool
 from boardgame_tracker_backend.main import app
 from boardgame_tracker_backend.models import *
 from boardgame_tracker_backend.api.dependencies import get_db
+from boardgame_tracker_backend.core.config import settings
 
 from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
+
+# The test client talks http: a Secure cookie would never be sent back
+settings.COOKIE_SECURE = False
 
 IN_MEMORY_TESTING_DATABASE_URL = "sqlite:///:memory:"
 EMAIL_TEST_PLAYER = "test@example.com"
@@ -55,6 +59,13 @@ def client() -> Generator[TestClient, None, None]:
         yield c
     # Clean up the override after tests
     app.dependency_overrides.clear()
+
+
+# The client is shared by a whole module: don't let a login leak into the next test
+@pytest.fixture(scope="function", autouse=True)
+def clear_client_cookies(client: TestClient) -> Generator[None, None, None]:
+    yield
+    client.cookies.clear()
 
 
 @pytest.fixture(scope="function")
