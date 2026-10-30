@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     DATABASE_TYPE: str = "sqlite"  # Default to sqlite if not specified
     PROJECT_NAME: str = "Boardgame Tracker"
     ENV: str = "dev"
+    # Directory of the built frontend; when unset, only the API is served
+    STATIC_DIR: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env")
 
