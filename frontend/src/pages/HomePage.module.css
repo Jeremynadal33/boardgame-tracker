@@ -1,0 +1,53 @@
+.hero {
+    padding: 48px 0 56px;
+}
+
+.title {
+    font-size: 78px;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 24px 0;
+    max-width: 14ch;
+}
+
+.lead {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    max-width: 48ch;
+    margin: 0 0 36px;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ideas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.ideaTitle {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.ideaText {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+@media (max-width: 760px) {
+    .title {
+        font-size: 46px;
+    }
+
+    .ideas {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,109 @@
+.split {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.aside {
+    background: var(--color-dark);
+    color: var(--color-on-dark);
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-on-dark);
+}
+
+.brand:hover {
+    color: var(--color-on-dark);
+    text-decoration: none;
+}
+
+.logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--color-bg);
+    display: grid;
+    place-items: center;
+    color: var(--color-dark);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.name {
+    font-family: var(--font-serif);
+    font-size: 24px;
+}
+
+.pitch {
+    font-family: var(--font-serif);
+    font-size: 46px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    max-width: 20ch;
+}
+
+.pitchText {
+    color: var(--color-on-dark-muted);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 38ch;
+    margin: 0;
+}
+
+.formSide {
+    display: grid;
+    place-items: center;
+    padding: 48px;
+}
+
+.form {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.title {
+    font-size: 40px;
+    margin-bottom: -12px;
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    margin: 0 0 14px;
+}
+
+.error {
+    margin: 0;
+    color: var(--color-danger);
+    font-size: 14px;
+}
+
+@media (max-width: 760px) {
+    .split {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+
+    .aside {
+        padding: 32px 24px;
+        gap: 28px;
+    }
+}
+
+.footnote {
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
