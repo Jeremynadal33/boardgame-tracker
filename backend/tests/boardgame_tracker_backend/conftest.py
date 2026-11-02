@@ -6,7 +6,7 @@ from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
 
 from boardgame_tracker_backend.main import app
-from boardgame_tracker_backend.models import *
+import boardgame_tracker_backend.models  # noqa: F401
 from boardgame_tracker_backend.api.dependencies import get_db
 from boardgame_tracker_backend.core.config import settings
 
@@ -63,9 +63,11 @@ def client() -> Generator[TestClient, None, None]:
 
 # The client is shared by a whole module: don't let a login leak into the next test
 @pytest.fixture(scope="function", autouse=True)
-def clear_client_cookies(client: TestClient) -> Generator[None, None, None]:
+def clear_client_cookies(request: pytest.FixtureRequest) -> Generator[None, None, None]:
     yield
-    client.cookies.clear()
+    # Only touch the client when the test uses it: don't build the app for unit tests
+    if "client" in request.fixturenames:
+        request.getfixturevalue("client").cookies.clear()
 
 
 @pytest.fixture(scope="function")
