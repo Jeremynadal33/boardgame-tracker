@@ -19,6 +19,11 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 # Must stay after every other route: it catches everything else
 if settings.STATIC_DIR:
     mount_frontend(app, Path(settings.STATIC_DIR), settings.API_V1_STR)
+else:
+
+    @app.get("/")
+    def home():
+        return {"message": "Welcome to the Boardgame Tracker API!"}
 
 
 def square(n):
