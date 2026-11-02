@@ -2,7 +2,6 @@
 name = "boardgame-tracker-backend"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "bcrypt==4.3.0", # keep this version because ongoing issue on password length https://foss.heptapod.net/python-libs/passlib/-/issues/196

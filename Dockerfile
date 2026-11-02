@@ -12,7 +12,7 @@ FROM python:3.13-slim AS runtime
 COPY --from=ghcr.io/astral-sh/uv:0.12.1 /uv /usr/local/bin/uv
 
 WORKDIR /app
-COPY backend/pyproject.toml backend/uv.lock backend/README.md ./
+COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY backend/boardgame_tracker_backend ./boardgame_tracker_backend
 RUN uv sync --frozen --no-dev
