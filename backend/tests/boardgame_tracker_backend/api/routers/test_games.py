@@ -29,6 +29,16 @@ class TestCreateGame:
         assert data["description"] == "A popular board game"
         assert "created_by" in data.keys()
 
+    def test_create_game_min_players_above_max_players(
+        self, client: TestClient, normal_player_token_headers: dict[str, str]
+    ) -> None:
+        game_data = {"name": "Azul", "min_players": 5, "max_players": 2}
+        response = client.post(
+            games_endpoint, json=game_data, headers=normal_player_token_headers
+        )
+        assert response.status_code == 422
+        assert "min_players must not exceed max_players" in response.text
+
     def test_create_game_already_exists(
         self, client: TestClient, normal_player_token_headers: dict[str, str]
     ) -> None:
