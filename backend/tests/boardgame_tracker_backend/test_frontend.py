@@ -52,10 +52,26 @@ def test_api_routes_still_work(frontend_client: TestClient) -> None:
     assert frontend_client.get("/api/v1/ping").json() == {"ping": "pong"}
 
 
-def test_unknown_api_route_is_404_not_index(frontend_client: TestClient) -> None:
-    assert frontend_client.get("/api/v1/unknown").status_code == 404
+@pytest.mark.parametrize(
+    "path", ["/api", "/api/v1/unknown", "/api/unknown", "/api/v2/games"]
+)
+def test_unknown_api_route_is_404_not_index(
+    frontend_client: TestClient, path: str
+) -> None:
+    assert frontend_client.get(path).status_code == 404
+
+
+def test_unknown_api_route_is_404_for_any_method(frontend_client: TestClient) -> None:
+    assert frontend_client.post("/api/v1/unknown").status_code == 404
+    assert frontend_client.delete("/api/v2/games").status_code == 404
 
 
 def test_path_traversal_does_not_leak_files(frontend_client: TestClient) -> None:
     response = frontend_client.get("/%2e%2e/secret.txt")
-    assert "secret" not in response.text
+    assert response.text == "<html>spa</html>"
+
+
+def test_nul_byte_in_path_falls_back_to_index(frontend_client: TestClient) -> None:
+    response = frontend_client.get("/%00")
+    assert response.status_code == 200
+    assert response.text == "<html>spa</html>"
