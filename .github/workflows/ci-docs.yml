@@ -1,0 +1,40 @@
+name: CI docs
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "backend/docs/**"
+      - "frontend/docs/**"
+      - "mkdocs.yml"
+      - "backend/mkdocs.yml"
+      - "frontend/mkdocs.yml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/ci-docs.yml"
+      - ".github/workflows/docs.yml"
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: ./.github/actions/install_uv
+        with:
+          uv_version: "0.12.1"
+          cache_dependency_glob: uv.lock
+          python_version_file: .python-version
+
+      # --strict turns broken links and missing pages into errors
+      - name: Build the documentation
+        run: uv run --group docs mkdocs build --strict
