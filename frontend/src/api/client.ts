@@ -17,9 +17,25 @@ function toMessage(detail: unknown, fallback: string): string {
     return fallback;
 }
 
-export async function request<T = void>(path: string, init?: RequestInit): Promise<T> {
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+    unauthorizedHandler = handler;
+}
+
+type RequestOptions = {
+    // False for the session probe, whose 401 only means "nobody is logged in"
+    notifyUnauthorized?: boolean;
+};
+
+export async function request<T = void>(
+    path: string,
+    init?: RequestInit,
+    { notifyUnauthorized = true }: RequestOptions = {},
+): Promise<T> {
     const response = await fetch(`${API_PREFIX}${path}`, { credentials: "same-origin", ...init });
     if (!response.ok) {
+        if (response.status === 401 && notifyUnauthorized) unauthorizedHandler?.();
         const body = await response.json().catch(() => null);
         throw new ApiError(response.status, toMessage(body?.detail, response.statusText));
     }

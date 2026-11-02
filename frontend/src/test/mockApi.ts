@@ -1,4 +1,5 @@
-type Handler = (init?: RequestInit) => { status: number; body?: unknown };
+type MockResponse = { status: number; body?: unknown };
+type Handler = (init?: RequestInit) => MockResponse | Promise<MockResponse>;
 
 export function mockApi(routes: Record<string, Handler>) {
     const calls: { url: string; init?: RequestInit }[] = [];
@@ -9,7 +10,7 @@ export function mockApi(routes: Record<string, Handler>) {
             const key = `${init?.method ?? "GET"} ${url}`;
             const handler = routes[key];
             if (!handler) throw new Error(`Unmocked request: ${key}`);
-            const { status, body } = handler(init);
+            const { status, body } = await handler(init);
             return new Response(body === undefined ? null : JSON.stringify(body), { status });
         }),
     );

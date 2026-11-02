@@ -31,7 +31,11 @@ export function UserMenu() {
     async function handleLogout() {
         setOpen(false);
         navigate("/");
-        await logout();
+        try {
+            await logout();
+        } catch {
+            // The player is signed out locally anyway; the next page load re-checks the session
+        }
     }
 
     return (

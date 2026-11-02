@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
@@ -208,5 +208,179 @@ describe("add a game", () => {
 
         await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("already exists"));
         expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+});
+
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => (resolve = r));
+    return { promise, resolve };
+}
+
+describe("races on first load", () => {
+    it("a late 401 from the initial session check does not undo a login", async () => {
+        window.history.pushState({}, "", "/login");
+        const initialCheck = deferred<{ status: number; body: unknown }>();
+        let meCalls = 0;
+        mockApi({
+            "GET /api/v1/players/me": () =>
+                ++meCalls === 1 ? initialCheck.promise : { status: 200, body: player },
+            "POST /api/v1/players/login/access-token": () => ({ status: 204 }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [] }),
+        });
+        render(<App />);
+
+        await userEvent.type(await screen.findByLabelText("Email"), "toto@example.com");
+        await userEvent.type(screen.getByLabelText("Password"), "securepassword123");
+        await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+        expect(await screen.findByRole("heading", { name: "Games" })).toBeInTheDocument();
+
+        initialCheck.resolve({ status: 401, body: { detail: "Not authenticated" } });
+
+        await waitFor(() => expect(meCalls).toBe(2));
+        expect(screen.getByRole("heading", { name: "Games" })).toBeInTheDocument();
+        expect(window.location.pathname).toBe("/games");
+    });
+
+    it("keeps a game created while the list was still loading", async () => {
+        window.history.pushState({}, "", "/games");
+        const azul = { id: "g2", name: "Azul", description: null, min_players: 2, max_players: 4 };
+        const initialList = deferred<{ status: number; body: unknown }>();
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => initialList.promise,
+            "POST /api/v1/games/": () => ({ status: 201, body: azul }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Add a game" }));
+        await userEvent.type(screen.getByLabelText("Name"), "Azul");
+        await userEvent.click(screen.getByRole("button", { name: "Add game" }));
+        expect(await screen.findByRole("heading", { name: "Azul" })).toBeInTheDocument();
+
+        initialList.resolve({ status: 200, body: [catan] });
+
+        expect(await screen.findByRole("button", { name: /Catan/ })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Azul" })).toBeInTheDocument();
+    });
+});
+
+describe("games search", () => {
+    const azul = { id: "g2", name: "Azul", description: "Tiles", min_players: 2, max_players: 4 };
+
+    beforeEach(() => {
+        window.history.pushState({}, "", "/games");
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [catan, azul] }),
+        });
+    });
+
+    it("shows the details of a game that matches the search, not the previously selected one", async () => {
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: /Catan/ }));
+        await userEvent.type(screen.getByLabelText("Search a game"), "Azul");
+
+        expect(screen.getByRole("heading", { name: "Azul" })).toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: "Catan" })).not.toBeInTheDocument();
+    });
+
+    it("shows no details when nothing matches", async () => {
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: /Catan/ }));
+        await userEvent.type(screen.getByLabelText("Search a game"), "zzz");
+
+        expect(screen.queryByRole("heading", { name: "Catan" })).not.toBeInTheDocument();
+    });
+});
+
+describe("add a game modal", () => {
+    beforeEach(() => {
+        window.history.pushState({}, "", "/games");
+    });
+
+    it("closes when clicking outside of it or pressing escape", async () => {
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [catan] }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Add a game" }));
+        await userEvent.click(screen.getByRole("dialog"));
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole("button", { name: "Add a game" }));
+        fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("stays open when clicking inside of it", async () => {
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [catan] }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Add a game" }));
+        await userEvent.click(screen.getByLabelText("Name"));
+
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("refuses a minimum above the maximum without calling the API", async () => {
+        const calls = mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [catan] }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Add a game" }));
+        await userEvent.type(screen.getByLabelText("Name"), "Azul");
+        await userEvent.clear(screen.getByLabelText("Min players"));
+        await userEvent.type(screen.getByLabelText("Min players"), "5");
+        await userEvent.clear(screen.getByLabelText("Max players"));
+        await userEvent.type(screen.getByLabelText("Max players"), "2");
+        await userEvent.click(screen.getByRole("button", { name: "Add game" }));
+
+        expect(screen.getByRole("alert")).toHaveTextContent("Min players must not exceed max players");
+        expect(calls.some((call) => call.init?.method === "POST")).toBe(false);
+    });
+});
+
+describe("session handling", () => {
+    it("sends the player back to the login page when the session expired", async () => {
+        window.history.pushState({}, "", "/games");
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [catan] }),
+            "POST /api/v1/games/": () => ({ status: 401, body: { detail: "Token has expired" } }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Add a game" }));
+        await userEvent.type(screen.getByLabelText("Name"), "Azul");
+        await userEvent.click(screen.getByRole("button", { name: "Add game" }));
+
+        expect(await screen.findByRole("heading", { name: "Welcome back" })).toBeInTheDocument();
+        expect(window.location.pathname).toBe("/login");
+    });
+
+    it("signs the player out locally even when the logout request fails", async () => {
+        window.history.pushState({}, "", "/games");
+        mockApi({
+            "GET /api/v1/players/me": () => ({ status: 200, body: player }),
+            "GET /api/v1/games/": () => ({ status: 200, body: [] }),
+            "POST /api/v1/players/logout": () => ({ status: 500, body: { detail: "boom" } }),
+        });
+        render(<App />);
+
+        await userEvent.click(await screen.findByRole("button", { name: "Account menu" }));
+        await userEvent.click(screen.getByRole("menuitem", { name: "Logout" }));
+
+        expect(await screen.findByRole("heading", { name: "Every game night, remembered." })).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole("button", { name: "Account menu" })).not.toBeInTheDocument());
     });
 });

@@ -20,13 +20,16 @@ export function GamesPage() {
 
     useEffect(() => {
         listGames()
-            .then(setGames)
+            .then((loaded) =>
+                // Keep the games created while the list was loading
+                setGames((current) => [...loaded, ...current.filter((game) => !loaded.some((l) => l.id === game.id))]),
+            )
             .catch(() => setError("Could not load the games"));
     }, []);
 
     const normalizedQuery = query.trim().toLowerCase();
     const filtered = games.filter((game) => game.name.toLowerCase().includes(normalizedQuery));
-    const selected = games.find((game) => game.id === selectedId) ?? filtered[0] ?? null;
+    const selected = filtered.find((game) => game.id === selectedId) ?? filtered[0] ?? null;
 
     function handleCreated(game: Game) {
         setGames((current) => [...current, game]);

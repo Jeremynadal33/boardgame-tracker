@@ -1,21 +1,23 @@
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--color-overlay);
-    display: grid;
-    place-items: center;
-    z-index: 60;
-    padding: 32px;
-}
-
 .modal {
-    width: 100%;
+    width: calc(100% - 64px);
     max-width: 460px;
+    max-height: calc(100dvh - 64px);
+    margin: auto;
+    padding: 0;
+    overflow-y: auto;
     background: #fdfbf8;
+    color: var(--color-text);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-modal);
-    padding: 32px;
     box-shadow: 0 40px 80px -40px rgba(31, 27, 23, 0.5);
+}
+
+.modal::backdrop {
+    background: var(--color-overlay);
+}
+
+.content {
+    padding: 32px;
 }
 
 .title {

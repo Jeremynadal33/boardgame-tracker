@@ -14,7 +14,7 @@ export function logout(): Promise<void> {
 }
 
 export function fetchCurrentPlayer(): Promise<Player> {
-    return request<Player>("/players/me");
+    return request<Player>("/players/me", undefined, { notifyUnauthorized: false });
 }
 
 export function signup(pseudo: string, email: string, password: string): Promise<Player> {

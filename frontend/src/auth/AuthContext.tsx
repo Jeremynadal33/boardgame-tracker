@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as authApi from "@/api/auth";
+import { setUnauthorizedHandler } from "@/api/client";
 import type { Player } from "@/api/auth";
 
 type AuthState = {
@@ -16,17 +17,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [player, setPlayer] = useState<Player | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Bumped by every login/logout so that a slower, older response never overwrites a newer state
+    const generation = useRef(0);
+
     useEffect(() => {
+        const startedAt = generation.current;
+        const isStale = () => generation.current !== startedAt;
         authApi
             .fetchCurrentPlayer()
-            .then(setPlayer)
-            .catch(() => setPlayer(null))
+            .then((current) => {
+                if (!isStale()) setPlayer(current);
+            })
+            .catch(() => {
+                if (!isStale()) setPlayer(null);
+            })
             .finally(() => setLoading(false));
     }, []);
 
+    useEffect(() => {
+        setUnauthorizedHandler(() => {
+            generation.current += 1;
+            setPlayer(null);
+            setLoading(false);
+        });
+        return () => setUnauthorizedHandler(null);
+    }, []);
+
     const login = useCallback(async (email: string, password: string) => {
+        generation.current += 1;
         await authApi.login(email, password);
         setPlayer(await authApi.fetchCurrentPlayer());
+        setLoading(false);
     }, []);
 
     const signup = useCallback(
@@ -38,8 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     const logout = useCallback(async () => {
-        await authApi.logout();
-        setPlayer(null);
+        generation.current += 1;
+        try {
+            await authApi.logout();
+        } finally {
+            setPlayer(null);
+            setLoading(false);
+        }
     }, []);
 
     const value = useMemo(() => ({ player, loading, login, signup, logout }), [player, loading, login, signup, logout]);

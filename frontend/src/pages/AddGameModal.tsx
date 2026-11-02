@@ -19,6 +19,10 @@ export function AddGameModal({ onCreated, onCancel }: Props) {
     async function handleSubmit(event: FormEvent) {
         event.preventDefault();
         setError(null);
+        if (Number(minPlayers) > Number(maxPlayers)) {
+            setError("Min players must not exceed max players");
+            return;
+        }
         setSubmitting(true);
         try {
             const game = await createGame({
@@ -35,7 +39,7 @@ export function AddGameModal({ onCreated, onCancel }: Props) {
     }
 
     return (
-        <Modal title="Add a game" subtitle="It will be available to everyone in the group.">
+        <Modal title="Add a game" subtitle="It will be available to everyone in the group." onClose={onCancel}>
             <form className={styles.form} onSubmit={handleSubmit}>
                 <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
                 <TextAreaField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
