@@ -57,7 +57,7 @@ class TestLoginAccessToken:
         set_cookie = response.headers["set-cookie"]
         assert f"{settings.ACCESS_TOKEN_COOKIE_NAME}=fake-jwt-token" in set_cookie
         assert "HttpOnly" in set_cookie
-        assert "SameSite=lax" in set_cookie
+        assert "SameSite=strict" in set_cookie
 
     @patch("boardgame_tracker_backend.domain.players.create_access_token")
     def test_login_access_token_player_not_found(
@@ -239,3 +239,56 @@ class TestListPlayers:
         assert response.status_code == 401
         data = response.json()
         assert data["detail"] == "Not authenticated"
+
+
+class TestOriginCheck:
+    """Browser requests coming from another site must not log anyone in"""
+
+    login_data = {"username": "test@example.com", "password": "testpassword"}
+
+    def test_cross_site_login_is_refused(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Origin": "https://evil.example.com"},
+        )
+
+        assert response.status_code == 403
+        assert "set-cookie" not in response.headers
+
+    def test_opaque_origin_is_refused(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT, data=self.login_data, headers={"Origin": "null"}
+        )
+
+        assert response.status_code == 403
+
+    def test_same_host_origin_is_accepted(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Origin": "http://testserver"},
+        )
+
+        assert response.status_code != 403
+
+    def test_referer_is_checked_when_origin_is_missing(
+        self, client: TestClient
+    ) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Referer": "https://evil.example.com/form"},
+        )
+
+        assert response.status_code == 403
+
+    def test_allowed_origin_is_accepted(self, client: TestClient) -> None:
+        with patch.object(settings, "ALLOWED_ORIGINS", ["https://app.example.com"]):
+            response = client.post(
+                settings.LOGIN_ENDPOINT,
+                data=self.login_data,
+                headers={"Origin": "https://app.example.com"},
+            )
+
+        assert response.status_code != 403

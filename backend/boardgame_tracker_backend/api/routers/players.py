@@ -7,6 +7,7 @@ from typing import Any
 from boardgame_tracker_backend.api.dependencies import (
     SessionDep,
     CurrentPlayerDep,
+    OriginCheck,
     get_current_player,
 )
 
@@ -27,7 +28,10 @@ router = APIRouter(
 
 ###### Open endpoints ######
 @router.post(
-    "/signup", response_model=PlayerPublic, status_code=status.HTTP_201_CREATED
+    "/signup",
+    response_model=PlayerPublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[OriginCheck],
 )
 def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     """
@@ -52,7 +56,21 @@ def register_player(*, session: SessionDep, player_in: PlayerCreate) -> Any:
     return db_player
 
 
-@router.post("/login/access-token", status_code=status.HTTP_204_NO_CONTENT)
+def _cookie_attributes() -> dict[str, Any]:
+    # Shared by set_cookie and delete_cookie: they must match for the browser to clear it
+    return {
+        "key": settings.ACCESS_TOKEN_COOKIE_NAME,
+        "httponly": True,
+        "secure": settings.COOKIE_SECURE,
+        "samesite": "strict",
+    }
+
+
+@router.post(
+    "/login/access-token",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[OriginCheck],
+)
 def login_access_token(
     session: SessionDep,
     response: Response,
@@ -66,12 +84,9 @@ def login_access_token(
             session=session, email=form_data.username, password=form_data.password
         )
         response.set_cookie(
-            key=settings.ACCESS_TOKEN_COOKIE_NAME,
             value=token.access_token,
             max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            httponly=True,
-            secure=settings.COOKIE_SECURE,
-            samesite="lax",
+            **_cookie_attributes(),
         )
     except players.PlayerNotFoundError:
         raise HTTPException(
@@ -94,17 +109,14 @@ def login_access_token(
         )
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/logout", status_code=status.HTTP_204_NO_CONTENT, dependencies=[OriginCheck]
+)
 def logout(response: Response) -> None:
     """
     Log out: remove the access token cookie
     """
-    response.delete_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite="lax",
-    )
+    response.delete_cookie(**_cookie_attributes())
 
 
 ###### Protected endpoints : Must use valid token ######

@@ -1,5 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from boardgame_tracker_backend.api.dependencies import SessionDep, CurrentPlayerDep
+from boardgame_tracker_backend.api.dependencies import (
+    CurrentPlayerDep,
+    OriginCheck,
+    SessionDep,
+)
 from boardgame_tracker_backend.models.game import GameCreate, Game, GamePublic
 from boardgame_tracker_backend.domain import games
 
@@ -27,7 +31,12 @@ def list_games(*, session: SessionDep) -> Sequence[Game]:
 ###### Protected endpoints : Must use valid token ######
 
 
-@router.post("/", response_model=GamePublic, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=GamePublic,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[OriginCheck],
+)
 def create_game(
     *, session: SessionDep, current_player: CurrentPlayerDep, game_in: GameCreate
 ) -> Game:
