@@ -2,13 +2,12 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from boardgame_tracker_backend.core.config import settings
-from boardgame_tracker_backend.models.player import PlayerCreate, PlayerUpdate
 from boardgame_tracker_backend.domain import players
 from boardgame_tracker_backend.domain.players import register_player
-
+from boardgame_tracker_backend.models.player import PlayerCreate, PlayerUpdate
 from tests.boardgame_tracker_backend.utils.utils import (
-    random_lower_string,
     random_email,
+    random_lower_string,
 )
 
 

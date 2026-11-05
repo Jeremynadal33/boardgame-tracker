@@ -1,24 +1,21 @@
-from fastapi import APIRouter, HTTPException, Response, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from typing import Annotated
+from typing import Annotated, Any
 
-from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from boardgame_tracker_backend.api.dependencies import (
-    SessionDep,
     CurrentPlayerDep,
     OriginCheck,
+    SessionDep,
     get_current_player,
 )
-
 from boardgame_tracker_backend.core.config import settings
+from boardgame_tracker_backend.domain import players
 from boardgame_tracker_backend.models.player import (
     PlayerCreate,
     PlayerPublic,
     PlayersPublic,
 )
-from boardgame_tracker_backend.domain import players
-
 
 router = APIRouter(
     prefix="/players",

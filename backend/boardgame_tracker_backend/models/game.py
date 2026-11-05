@@ -1,12 +1,12 @@
-from typing import Optional
 from uuid import UUID, uuid4
+
 from pydantic import model_validator
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
 
 class GameBase(SQLModel):
     name: str = Field(index=True, unique=True)
-    description: Optional[str] = None
+    description: str | None = None
     min_players: int = Field(gt=0)
     max_players: int = Field(gt=0)
 

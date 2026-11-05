@@ -6,7 +6,6 @@ from boardgame_tracker_backend.api.all_routes import api_router
 from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.frontend import mount_frontend
 
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     # openapi_url=f"{settings.API_V1_STR}/openapi.json",

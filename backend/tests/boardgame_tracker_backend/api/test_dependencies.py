@@ -1,12 +1,13 @@
-import pytest
-from uuid import uuid4
 from datetime import timedelta
+from uuid import uuid4
+
+import pytest
 from fastapi import HTTPException
 from sqlmodel import Session
 
 from boardgame_tracker_backend.api.dependencies import get_current_player
-from boardgame_tracker_backend.models.player import Player
 from boardgame_tracker_backend.core import security
+from boardgame_tracker_backend.models.player import Player
 
 
 class TestGetCurrentPlayer:

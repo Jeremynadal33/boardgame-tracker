@@ -1,23 +1,21 @@
-from sqlmodel import Session
-from pydantic import ValidationError
-from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import APIKeyCookie
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from collections.abc import Generator
+from typing import Annotated
 from urllib.parse import urlparse
 from uuid import UUID
 
-from collections.abc import Generator
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import APIKeyCookie
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from pydantic import ValidationError
+from sqlmodel import Session
 
-from typing import Annotated
-
-from boardgame_tracker_backend.core.database import engine
-from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.core import security
-
+from boardgame_tracker_backend.core.config import settings
+from boardgame_tracker_backend.core.database import engine
 from boardgame_tracker_backend.models.player import Player, TokenPayload
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     with Session(engine) as session:
         yield session
 

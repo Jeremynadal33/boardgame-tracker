@@ -1,11 +1,11 @@
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
+
 from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.domain import players
 from boardgame_tracker_backend.models.player import Token
-
-from fastapi.testclient import TestClient
-import pytest
-from unittest.mock import patch
-
 from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
 
 #### Testing api/v1/players endpoints ####

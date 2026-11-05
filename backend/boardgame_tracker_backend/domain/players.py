@@ -1,20 +1,20 @@
+from datetime import timedelta
+
+from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, func, select
+
+from boardgame_tracker_backend.core import security
+from boardgame_tracker_backend.core.config import settings
+from boardgame_tracker_backend.core.security import get_password_hash, verify_password
 from boardgame_tracker_backend.models.player import (
     Player,
     PlayerCreate,
-    PlayerUpdate,
     PlayerPublic,
     PlayersPublic,
+    PlayerUpdate,
     Token,
 )
-from boardgame_tracker_backend.core.security import get_password_hash, verify_password
-
-from sqlmodel import Session, select, func
-from sqlalchemy.exc import IntegrityError
-from pydantic import ValidationError
-
-from datetime import timedelta
-from boardgame_tracker_backend.core.config import settings
-from boardgame_tracker_backend.core import security
 
 
 class PlayerAlreadyExistsError(Exception):
@@ -80,10 +80,10 @@ def register_player(*, session: Session, player_in: PlayerCreate) -> Player:
             raise PlayerCreationError(f"Unknown IntegrityError: {error_msg}")
     except ValidationError as e:
         session.rollback()
-        raise PlayerValidationError(f"Player validation error: {str(e)}")
+        raise PlayerValidationError(f"Player validation error: {e!s}")
     except Exception as e:
         session.rollback()
-        raise PlayerCreationError(f"Unknown error while creating player: {str(e)}")
+        raise PlayerCreationError(f"Unknown error while creating player: {e!s}")
 
 
 def update_player(
@@ -108,7 +108,7 @@ def update_player(
 
     except ValidationError as e:
         session.rollback()
-        raise PlayerValidationError(f"Player validation error: {str(e)}")
+        raise PlayerValidationError(f"Player validation error: {e!s}")
     except IntegrityError as e:
         session.rollback()
         error_msg = str(e.orig) if hasattr(e, "orig") else str(e)
@@ -119,7 +119,7 @@ def update_player(
             raise PlayerUpdateError(f"Unknown IntegrityError: {error_msg}")
     except Exception as e:
         session.rollback()
-        raise PlayerUpdateError(f"Unknown error while updating player: {str(e)}")
+        raise PlayerUpdateError(f"Unknown error while updating player: {e!s}")
 
 
 def list_players(*, session: Session) -> PlayersPublic:
@@ -170,4 +170,4 @@ def create_access_token(*, session: Session, email: str, password: str) -> Token
         # Re-raise as-is to preserve the specific error type
         raise
     except Exception as e:
-        raise TokenCreationError(f"Failed to create access token: {str(e)}")
+        raise TokenCreationError(f"Failed to create access token: {e!s}")

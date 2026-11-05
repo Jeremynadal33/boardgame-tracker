@@ -1,6 +1,6 @@
-from boardgame_tracker_backend.core.config import settings
-
 from fastapi.testclient import TestClient
+
+from boardgame_tracker_backend.core.config import settings
 
 #### Testing api/v1/games endpoints ####
 games_endpoint = f"{settings.API_V1_STR}/games/"

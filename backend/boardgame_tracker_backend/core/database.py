@@ -1,4 +1,5 @@
 from sqlmodel import Session, create_engine, select
+
 from boardgame_tracker_backend.core.config import settings
 
 # Engine is the low-level interface to the database

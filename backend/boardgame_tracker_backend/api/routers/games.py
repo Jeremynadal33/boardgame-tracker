@@ -1,14 +1,14 @@
+from collections.abc import Sequence
+
 from fastapi import APIRouter, HTTPException, status
+
 from boardgame_tracker_backend.api.dependencies import (
     CurrentPlayerDep,
     OriginCheck,
     SessionDep,
 )
-from boardgame_tracker_backend.models.game import GameCreate, Game, GamePublic
 from boardgame_tracker_backend.domain import games
-
-from typing import Sequence
-
+from boardgame_tracker_backend.models.game import Game, GameCreate, GamePublic
 
 router = APIRouter(
     prefix="/games",

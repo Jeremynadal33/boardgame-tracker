@@ -1,15 +1,16 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 import jwt
 import pytest
 
+from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.core.security import (
+    ALGORITHM,
     create_access_token,
     decode_access_token,
-    verify_password,
     get_password_hash,
-    ALGORITHM,
+    verify_password,
 )
-from boardgame_tracker_backend.core.config import settings
 
 
 class TestCreateAccessToken:
@@ -27,7 +28,7 @@ class TestCreateAccessToken:
         """Test that the created token is a valid JWT."""
         subject = "test_player"
         expires_delta = timedelta(minutes=30)
-        expected_exp = datetime.now(timezone.utc) + expires_delta
+        expected_exp = datetime.now(UTC) + expires_delta
 
         token = create_access_token(subject, expires_delta)
 
@@ -35,7 +36,7 @@ class TestCreateAccessToken:
         decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
 
         # Allow 1 second tolerance for timing differences
-        exp_time = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
+        exp_time = datetime.fromtimestamp(decoded["exp"], tz=UTC)
         assert abs((exp_time - expected_exp).total_seconds()) < 1
 
         assert decoded["sub"] == subject

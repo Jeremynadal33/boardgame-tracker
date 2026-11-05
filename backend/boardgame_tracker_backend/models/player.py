@@ -1,9 +1,9 @@
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field
-from pydantic import EmailStr
-from typing import Sequence
 
-from datetime import datetime, timezone
+from pydantic import EmailStr
+from sqlmodel import Field, SQLModel
 
 
 class PlayerBase(SQLModel):
@@ -22,12 +22,10 @@ class Player(PlayerBase, table=True):
     __table_name__ = "player"
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     hashed_password: str
-    created_at: datetime | None = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime | None = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        default_factory=lambda: datetime.now(UTC),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(UTC)},
     )
     # TODO: add FKs once relationships are defined
 

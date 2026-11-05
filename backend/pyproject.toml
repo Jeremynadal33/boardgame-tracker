@@ -17,10 +17,14 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-cov==4.1.0",
+    "ruff==0.17.3",
 ]
 
 [tool.uv]
 package = true
+
+[tool.ruff.lint]
+ignore = ["BLE001", "RUF012", "SIM118", "TRY201"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
