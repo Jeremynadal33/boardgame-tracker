@@ -1,6 +1,6 @@
-from boardgame_tracker_backend.core.config import settings
-
 from fastapi.testclient import TestClient
+
+from boardgame_tracker_backend.core.config import settings
 
 #### Testing api/v1/games endpoints ####
 games_endpoint = f"{settings.API_V1_STR}/games/"
@@ -28,6 +28,16 @@ class TestCreateGame:
         assert data["max_players"] == 4
         assert data["description"] == "A popular board game"
         assert "created_by" in data.keys()
+
+    def test_create_game_min_players_above_max_players(
+        self, client: TestClient, normal_player_token_headers: dict[str, str]
+    ) -> None:
+        game_data = {"name": "Azul", "min_players": 5, "max_players": 2}
+        response = client.post(
+            games_endpoint, json=game_data, headers=normal_player_token_headers
+        )
+        assert response.status_code == 422
+        assert "min_players must not exceed max_players" in response.text
 
     def test_create_game_already_exists(
         self, client: TestClient, normal_player_token_headers: dict[str, str]

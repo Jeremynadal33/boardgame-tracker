@@ -1,0 +1,6 @@
+site_name: Backend
+nav:
+  - Overview: index.md
+  - Database: database.md
+  - Authentication and security: security.md
+  - Open questions: questions.md

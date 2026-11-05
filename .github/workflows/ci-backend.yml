@@ -49,7 +49,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Check linting and capture exit code
-          if uvx ruff check --diff --output-format=github; then
+          if uv run ruff check --diff --output-format=github; then
             echo "✅ **Linting**: No issues found" >> $GITHUB_STEP_SUMMARY
             LINT_EXIT=0
           else
@@ -60,7 +60,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Check formatting and capture exit code
-          if uvx ruff format --check --diff; then
+          if uv run ruff format --check --diff; then
             echo "✅ **Formatting**: Code is properly formatted" >> $GITHUB_STEP_SUMMARY
             FORMAT_EXIT=0
           else

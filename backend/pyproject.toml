@@ -2,7 +2,6 @@
 name = "boardgame-tracker-backend"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "bcrypt==4.3.0", # keep this version because ongoing issue on password length https://foss.heptapod.net/python-libs/passlib/-/issues/196
@@ -18,10 +17,14 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-cov==4.1.0",
+    "ruff==0.17.3",
 ]
 
 [tool.uv]
 package = true
+
+[tool.ruff.lint]
+ignore = ["BLE001", "RUF012", "SIM118", "TRY201"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

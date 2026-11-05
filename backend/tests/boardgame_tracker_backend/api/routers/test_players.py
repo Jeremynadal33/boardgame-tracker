@@ -1,11 +1,11 @@
+from unittest.mock import patch
+
+import pytest
+from fastapi.testclient import TestClient
+
 from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.domain import players
 from boardgame_tracker_backend.models.player import Token
-
-from fastapi.testclient import TestClient
-import pytest
-from unittest.mock import patch
-
 from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
 
 #### Testing api/v1/players endpoints ####
@@ -41,7 +41,7 @@ class TestLoginAccessToken:
     def test_login_access_token_success(
         self, mock_create_token, client: TestClient
     ) -> None:
-        """Test successful login returns access token"""
+        """Test successful login sets the access token in an HttpOnly cookie"""
 
         mock_token = Token(access_token="fake-jwt-token", token_type="bearer")
         mock_create_token.return_value = mock_token
@@ -52,10 +52,12 @@ class TestLoginAccessToken:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["access_token"] == "fake-jwt-token"
-        assert data["token_type"] == "bearer"
+        assert response.status_code == 204
+        assert response.content == b""
+        set_cookie = response.headers["set-cookie"]
+        assert f"{settings.ACCESS_TOKEN_COOKIE_NAME}=fake-jwt-token" in set_cookie
+        assert "HttpOnly" in set_cookie
+        assert "SameSite=strict" in set_cookie
 
     @patch("boardgame_tracker_backend.domain.players.create_access_token")
     def test_login_access_token_player_not_found(
@@ -165,6 +167,20 @@ class TestLoginAccessToken:
         assert response.status_code == 422
 
 
+class TestLogout:
+    """Tests for the /players/logout endpoint"""
+
+    logout_url = players_base_endpoint + "logout"
+
+    def test_logout_clears_cookie(self, client: TestClient) -> None:
+        response = client.post(self.logout_url)
+
+        assert response.status_code == 204
+        set_cookie = response.headers["set-cookie"]
+        assert f'{settings.ACCESS_TOKEN_COOKIE_NAME}=""' in set_cookie
+        assert "Max-Age=0" in set_cookie
+
+
 #### Protected endpoints ####
 class TestReadCurrentPlayer:
     """Tests for the /players/me endpoint"""
@@ -223,3 +239,56 @@ class TestListPlayers:
         assert response.status_code == 401
         data = response.json()
         assert data["detail"] == "Not authenticated"
+
+
+class TestOriginCheck:
+    """Browser requests coming from another site must not log anyone in"""
+
+    login_data = {"username": "test@example.com", "password": "testpassword"}
+
+    def test_cross_site_login_is_refused(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Origin": "https://evil.example.com"},
+        )
+
+        assert response.status_code == 403
+        assert "set-cookie" not in response.headers
+
+    def test_opaque_origin_is_refused(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT, data=self.login_data, headers={"Origin": "null"}
+        )
+
+        assert response.status_code == 403
+
+    def test_same_host_origin_is_accepted(self, client: TestClient) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Origin": "http://testserver"},
+        )
+
+        assert response.status_code != 403
+
+    def test_referer_is_checked_when_origin_is_missing(
+        self, client: TestClient
+    ) -> None:
+        response = client.post(
+            settings.LOGIN_ENDPOINT,
+            data=self.login_data,
+            headers={"Referer": "https://evil.example.com/form"},
+        )
+
+        assert response.status_code == 403
+
+    def test_allowed_origin_is_accepted(self, client: TestClient) -> None:
+        with patch.object(settings, "ALLOWED_ORIGINS", ["https://app.example.com"]):
+            response = client.post(
+                settings.LOGIN_ENDPOINT,
+                data=self.login_data,
+                headers={"Origin": "https://app.example.com"},
+            )
+
+        assert response.status_code != 403

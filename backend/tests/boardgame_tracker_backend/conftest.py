@@ -2,14 +2,17 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
 
-from boardgame_tracker_backend.main import app
-from boardgame_tracker_backend.models import *
+import boardgame_tracker_backend.models  # noqa: F401
 from boardgame_tracker_backend.api.dependencies import get_db
-
+from boardgame_tracker_backend.core.config import settings
+from boardgame_tracker_backend.main import app
 from tests.boardgame_tracker_backend.utils.player import authentication_token_from_email
+
+# The test client talks http: a Secure cookie would never be sent back
+settings.COOKIE_SECURE = False
 
 IN_MEMORY_TESTING_DATABASE_URL = "sqlite:///:memory:"
 EMAIL_TEST_PLAYER = "test@example.com"
@@ -26,7 +29,7 @@ engine = create_engine(
 # scope "function" means that the fixture is created once per test function
 # It yields a session to be used in tests and cleans up after each test function is done
 @pytest.fixture(scope="function", autouse=True)
-def db() -> Generator[Session, None, None]:
+def db() -> Generator[Session]:
     with Session(engine) as session:
         # init_db(session) # Should we use the same init_db as production ?
 
@@ -39,7 +42,7 @@ def db() -> Generator[Session, None, None]:
         SQLModel.metadata.drop_all(engine)
 
 
-def get_test_db() -> Generator[Session, None, None]:
+def get_test_db() -> Generator[Session]:
     with Session(engine) as session:
         SQLModel.metadata.create_all(engine)
         yield session
@@ -48,13 +51,22 @@ def get_test_db() -> Generator[Session, None, None]:
 # scope module means that the fixture is created once per test module
 # It yields a TestClient to be used in tests so we can make requests to the FastAPI app
 @pytest.fixture(scope="module")
-def client() -> Generator[TestClient, None, None]:
+def client() -> Generator[TestClient]:
     # Override the database dependency to use the test database
     app.dependency_overrides[get_db] = get_test_db
     with TestClient(app) as c:
         yield c
     # Clean up the override after tests
     app.dependency_overrides.clear()
+
+
+# The client is shared by a whole module: don't let a login leak into the next test
+@pytest.fixture(scope="function", autouse=True)
+def clear_client_cookies(request: pytest.FixtureRequest) -> Generator[None]:
+    yield
+    # Only touch the client when the test uses it: don't build the app for unit tests
+    if "client" in request.fixturenames:
+        request.getfixturevalue("client").cookies.clear()
 
 
 @pytest.fixture(scope="function")

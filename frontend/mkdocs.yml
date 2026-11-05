@@ -1,0 +1,4 @@
+site_name: Frontend
+nav:
+  - Overview: index.md
+  - Open questions: questions.md

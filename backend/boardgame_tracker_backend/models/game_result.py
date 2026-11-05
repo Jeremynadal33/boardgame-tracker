@@ -1,6 +1,7 @@
-from typing import Optional, Dict, Any
+from typing import Any
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field, JSON, Column
+
+from sqlmodel import JSON, Column, Field, SQLModel
 
 
 ### Represents a game result in the db
@@ -11,6 +12,6 @@ class GameResult(SQLModel, table=True):
     player_id: UUID = Field(foreign_key="player.id")
     position: int = Field(ge=1)  # Position in the game (1st, 2nd, etc.)
     score: int = Field(default=0)
-    additional_game_stats: Optional[Dict[str, Any]] = Field(
+    additional_game_stats: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSON)
     )

@@ -1,11 +1,12 @@
-from typing import Optional
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field
+
+from pydantic import model_validator
+from sqlmodel import Field, SQLModel
 
 
 class GameBase(SQLModel):
     name: str = Field(index=True, unique=True)
-    description: Optional[str] = None
+    description: str | None = None
     min_players: int = Field(gt=0)
     max_players: int = Field(gt=0)
 
@@ -24,7 +25,11 @@ class Game(GameBase, table=True):
 
 ### Represents data needed to create a new game
 class GameCreate(GameBase):
-    pass
+    @model_validator(mode="after")
+    def _check_player_bounds(self) -> "GameCreate":
+        if self.min_players > self.max_players:
+            raise ValueError("min_players must not exceed max_players")
+        return self
 
 
 class GamePublic(GameBase):

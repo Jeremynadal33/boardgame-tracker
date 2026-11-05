@@ -1,34 +1,32 @@
-from sqlmodel import Session
-from pydantic import ValidationError
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+from collections.abc import Generator
+from typing import Annotated
+from urllib.parse import urlparse
 from uuid import UUID
 
-from collections.abc import Generator
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import APIKeyCookie
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from pydantic import ValidationError
+from sqlmodel import Session
 
-from typing import Annotated
-
-from boardgame_tracker_backend.core.database import engine
-from boardgame_tracker_backend.core.config import settings
 from boardgame_tracker_backend.core import security
-
+from boardgame_tracker_backend.core.config import settings
+from boardgame_tracker_backend.core.database import engine
 from boardgame_tracker_backend.models.player import Player, TokenPayload
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     with Session(engine) as session:
         yield session
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
 
-# Not entirely sure about why TokenDep is needed but it looks like best practice
-# The tokenUrl is the endpoint where clients can get the token
-# Must match the actual login endpoint in boardgame_tracker_backend/api/routers/players.py
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=settings.LOGIN_ENDPOINT)
+# The token is set as an HttpOnly cookie by the login endpoint in
+# boardgame_tracker_backend/api/routers/players.py
+access_token_cookie = APIKeyCookie(name=settings.ACCESS_TOKEN_COOKIE_NAME)
 
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+TokenDep = Annotated[str, Depends(access_token_cookie)]
 
 
 def get_current_player(session: SessionDep, token: TokenDep) -> Player:
@@ -76,3 +74,24 @@ def get_current_player(session: SessionDep, token: TokenDep) -> Player:
 
 
 CurrentPlayerDep = Annotated[Player, Depends(get_current_player)]
+
+
+def verify_origin(request: Request) -> None:
+    """Refuse browser requests sent from another site (CSRF, login CSRF included).
+
+    Requests without Origin/Referer (curl, server to server) are not browser
+    cross-site requests and are let through.
+    """
+    source = request.headers.get("origin") or request.headers.get("referer")
+    if source is None:
+        return
+    parsed = urlparse(source)
+    same_host = parsed.netloc != "" and parsed.netloc == request.headers.get("host")
+    if same_host or f"{parsed.scheme}://{parsed.netloc}" in settings.ALLOWED_ORIGINS:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, detail="Cross-origin request refused"
+    )
+
+
+OriginCheck = Depends(verify_origin)

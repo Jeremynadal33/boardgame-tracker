@@ -1,0 +1,45 @@
+site_name: Boardgame Tracker
+site_description: Record board game scores and find out who is the best player
+site_url: https://jeremynadal33.github.io/boardgame-tracker/
+repo_url: https://github.com/Jeremynadal33/boardgame-tracker
+repo_name: Jeremynadal33/boardgame-tracker
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+  # Pulls the docs of each sub project (backend/, frontend/) into this site
+  - monorepo
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Deployment: deployment.md
+  - Backend: "!include ./backend/mkdocs.yml"
+  - Frontend: "!include ./frontend/mkdocs.yml"

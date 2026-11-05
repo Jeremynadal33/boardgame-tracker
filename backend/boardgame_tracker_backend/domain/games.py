@@ -1,11 +1,11 @@
-from sqlmodel import Session, select
+from collections.abc import Sequence
+
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
-from typing import Sequence
+from sqlmodel import Session, select
 
 from boardgame_tracker_backend.models.game import Game, GameCreate
 from boardgame_tracker_backend.models.player import Player
-
-from pydantic import ValidationError
 
 # Define domain-specific exceptions
 
@@ -43,10 +43,10 @@ def create_game(
             raise GameCreationError(f"Unknown IntegrityError: {error_msg}")
     except ValidationError as e:
         session.rollback()
-        raise GameValidationError(f"Game validation error: {str(e)}")
+        raise GameValidationError(f"Game validation error: {e!s}")
     except Exception as e:
         session.rollback()
-        raise GameCreationError(f"Failed to create game: {str(e)}")
+        raise GameCreationError(f"Failed to create game: {e!s}")
 
 
 def list_games(*, session: Session) -> Sequence[Game]:

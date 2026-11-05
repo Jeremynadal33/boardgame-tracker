@@ -1,28 +1,26 @@
-from boardgame_tracker_backend.domain.players import (
-    register_player,
-    update_player,
-    PlayerAlreadyExistsError,
-    get_player_by_email,
-    list_players,
-    authenticate,
-    create_access_token,
-    PlayerNotFoundError,
-    InvalidCredentialsError,
-    InactivePlayerError,
-)
+import pytest
+from pytest import raises
+from sqlmodel import Session
 
 from boardgame_tracker_backend.core.security import verify_password
-
+from boardgame_tracker_backend.domain.players import (
+    InactivePlayerError,
+    InvalidCredentialsError,
+    PlayerAlreadyExistsError,
+    PlayerNotFoundError,
+    authenticate,
+    create_access_token,
+    get_player_by_email,
+    list_players,
+    register_player,
+    update_player,
+)
 from boardgame_tracker_backend.models.player import (
     PlayerCreate,
     PlayersPublic,
-    Token,
     PlayerUpdate,
+    Token,
 )
-
-from sqlmodel import Session
-from pytest import raises
-import pytest
 
 player_in = PlayerCreate(
     pseudo="toto", email="toto@gmail.com", password="securepassword123"
