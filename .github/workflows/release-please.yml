@@ -1,0 +1,41 @@
+name: Release please
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Releases created with GITHUB_TOKEN do not trigger other workflows,
+  # so the stable build is chained here instead of listening to `release: published`.
+  release-stable:
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release-please.outputs.version }}
+
+      - name: Build and push image
+        uses: ./.github/actions/docker-build-push
+        with:
+          tags: ${{ needs.release-please.outputs.version }} latest
