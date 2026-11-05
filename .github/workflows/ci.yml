@@ -145,3 +145,17 @@ jobs:
       - name: Run frontend tests
         run: npm run test:ci
         working-directory: frontend
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend_changes, frontend_changes]
+    if: needs.backend_changes.outputs.run_tests == 'true' || needs.frontend_changes.outputs.run_tests == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build image
+        uses: ./.github/actions/docker-build-push
+        with:
+          tags: ci
+          dry_run: 'true'
