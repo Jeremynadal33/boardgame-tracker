@@ -148,8 +148,6 @@ jobs:
 
   docker-build:
     runs-on: ubuntu-latest
-    needs: [backend_changes, frontend_changes]
-    if: needs.backend_changes.outputs.run_tests == 'true' || needs.frontend_changes.outputs.run_tests == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
